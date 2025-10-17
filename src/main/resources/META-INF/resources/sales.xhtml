@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Sales Management</title>
+</h:head>
+<h:body>
+    <h:form>
+        <p:menubar>
+            <p:menuitem value="Home" url="index.xhtml" icon="pi pi-home"/>
+            <p:menuitem value="Products" url="products.xhtml" icon="pi pi-box"/>
+            <p:menuitem value="Salespersons" url="salespersons.xhtml" icon="pi pi-users"/>
+            <p:menuitem value="Sales" url="sales.xhtml" icon="pi pi-shopping-cart"/>
+        </p:menubar>
+    </h:form>
+
+    <div style="margin: 20px;">
+        <h2>Sales Management</h2>
+
+        <h:form id="form">
+            <p:growl id="messages" showDetail="true"/>
+
+            <p:toolbar style="margin-top: 20px;">
+                <p:toolbarGroup>
+                    <p:commandButton value="New Sale" icon="pi pi-plus"
+                                     actionListener="#{salesBean.openNew}"
+                                     update=":form:salesDialog"
+                                     oncomplete="PF('salesDialog').show()"/>
+                </p:toolbarGroup>
+            </p:toolbar>
+
+            <p:dataTable id="dt" var="sale" value="#{salesBean.salesList}"
+                         selectionMode="single" selection="#{salesBean.selectedSales}"
+                         rowKey="#{sale.id}" paginator="true" rows="10"
+                         style="margin-top: 20px;">
+
+                <p:column headerText="Sale Date" sortBy="#{sale.saleDate}">
+                    <h:outputText value="#{sale.saleDate}" rendered="#{sale.saleDate != null}">
+                        <f:convertDateTime pattern="yyyy-MM-dd HH:mm" type="localDateTime"/>
+                    </h:outputText>
+                    <h:outputText value="-" rendered="#{sale.saleDate == null}"/>
+                </p:column>
+
+                <p:column headerText="Salesperson" sortBy="#{sale.salesperson.lastName}">
+                    <h:outputText value="#{sale.salesperson.firstName} #{sale.salesperson.lastName}"
+                                  rendered="#{sale.salesperson != null}"/>
+                    <h:outputText value="-" rendered="#{sale.salesperson == null}"/>
+                </p:column>
+
+                <p:column headerText="Product" sortBy="#{sale.product.name}">
+                    <h:outputText value="#{sale.product.name}" rendered="#{sale.product != null}"/>
+                    <h:outputText value="-" rendered="#{sale.product == null}"/>
+                </p:column>
+
+                <p:column headerText="Customer">
+                    <h:outputText value="#{sale.customerName}"/>
+                </p:column>
+
+                <p:column headerText="Quantity" sortBy="#{sale.quantity}">
+                    <h:outputText value="#{sale.quantity}"/>
+                </p:column>
+
+                <p:column headerText="Unit Price" sortBy="#{sale.unitPrice}">
+                    <h:outputText value="#{sale.unitPrice}">
+                        <f:convertNumber type="currency" currencySymbol="$"/>
+                    </h:outputText>
+                </p:column>
+
+                <p:column headerText="Total Amount" sortBy="#{sale.totalAmount}">
+                    <h:outputText value="#{sale.totalAmount}">
+                        <f:convertNumber type="currency" currencySymbol="$"/>
+                    </h:outputText>
+                </p:column>
+
+                <p:column headerText="Status">
+                    <h:outputText value="#{sale.status}"/>
+                </p:column>
+
+                <p:column headerText="Actions" style="width: 120px;">
+                    <p:commandButton icon="pi pi-pencil"
+                                     update=":form:salesDialog"
+                                     oncomplete="PF('salesDialog').show()"
+                                     styleClass="ui-button-warning"
+                                     style="margin-right: 5px;">
+                        <f:setPropertyActionListener value="#{sale}"
+                                                     target="#{salesBean.sales}"/>
+                    </p:commandButton>
+
+                    <p:commandButton icon="pi pi-trash"
+                                     styleClass="ui-button-danger"
+                                     update=":form:dt :form:messages"
+                                     actionListener="#{salesBean.deleteSales}">
+                        <f:setPropertyActionListener value="#{sale}"
+                                                     target="#{salesBean.selectedSales}"/>
+                        <p:confirm header="Confirmation" message="Delete this sale?"
+                                   icon="pi pi-exclamation-triangle"/>
+                    </p:commandButton>
+                </p:column>
+            </p:dataTable>
+
+            <p:dialog header="Sales Details" widgetVar="salesDialog" modal="true"
+                      showEffect="fade" hideEffect="fade" id="salesDialog" width="600">
+                <p:outputPanel>
+                    <p:panelGrid columns="2" style="margin-top: 20px;">
+                        <p:outputLabel for="salesperson" value="Salesperson:"/>
+                        <p:selectOneMenu id="salesperson" value="#{salesBean.sales.salesperson}"
+                                         converter="omnifaces.SelectItemsConverter" required="true">
+                            <f:selectItem itemLabel="Select Salesperson" itemValue="#{null}"/>
+                            <f:selectItems value="#{salesBean.activeSalespersons}"
+                                           var="sp"
+                                           itemLabel="#{sp.firstName} #{sp.lastName}"
+                                           itemValue="#{sp}"/>
+                        </p:selectOneMenu>
+
+                        <p:outputLabel for="product" value="Product:"/>
+                        <p:selectOneMenu id="product" value="#{salesBean.sales.product}"
+                                         converter="omnifaces.SelectItemsConverter" required="true">
+                            <f:selectItem itemLabel="Select Product" itemValue="#{null}"/>
+                            <f:selectItems value="#{salesBean.availableProducts}"
+                                           var="prod"
+                                           itemLabel="#{prod.name} (#{prod.code})"
+                                           itemValue="#{prod}"/>
+                            <p:ajax listener="#{salesBean.onProductChange}"
+                                    update="unitPrice totalAmount"/>
+                        </p:selectOneMenu>
+
+                        <p:outputLabel for="customerName" value="Customer Name:"/>
+                        <p:inputText id="customerName" value="#{salesBean.sales.customerName}" required="true"/>
+
+                        <p:outputLabel for="quantity" value="Quantity:"/>
+                        <p:inputNumber id="quantity" value="#{salesBean.sales.quantity}"
+                                       decimalPlaces="0" required="true">
+                            <p:ajax listener="#{salesBean.onQuantityChange}"
+                                    update="totalAmount"/>
+                        </p:inputNumber>
+
+                        <p:outputLabel for="unitPrice" value="Unit Price:"/>
+                        <p:inputNumber id="unitPrice" value="#{salesBean.sales.unitPrice}"
+                                       symbol="$ " decimalPlaces="2" required="true">
+                            <p:ajax listener="#{salesBean.calculateTotal}"
+                                    update="totalAmount"/>
+                        </p:inputNumber>
+
+                        <p:outputLabel for="totalAmount" value="Total Amount:"/>
+                        <p:inputNumber id="totalAmount" value="#{salesBean.sales.totalAmount}"
+                                       symbol="$ " decimalPlaces="2" disabled="true"/>
+
+                        <p:outputLabel for="status" value="Status:"/>
+                        <p:selectOneMenu id="status" value="#{salesBean.sales.status}" required="true">
+                            <f:selectItem itemLabel="PENDING" itemValue="PENDING"/>
+                            <f:selectItem itemLabel="COMPLETED" itemValue="COMPLETED"/>
+                            <f:selectItem itemLabel="CANCELLED" itemValue="CANCELLED"/>
+                        </p:selectOneMenu>
+
+                        <p:outputLabel for="saleDate" value="Sale Date:"/>
+                        <p:calendar id="saleDate" value="#{salesBean.sales.saleDate}"
+                                    pattern="yyyy-MM-dd HH:mm" showTime="true"
+                                    showButtonPanel="true">
+                            <f:convertDateTime pattern="yyyy-MM-dd HH:mm" type="localDateTime"/>
+                        </p:calendar>
+
+                        <p:outputLabel for="notes" value="Notes:"/>
+                        <p:inputTextarea id="notes" value="#{salesBean.sales.notes}"
+                                         rows="3" cols="30"/>
+                    </p:panelGrid>
+                </p:outputPanel>
+
+                <f:facet name="footer">
+                    <p:commandButton value="Save" icon="pi pi-check"
+                                     actionListener="#{salesBean.saveSales}"
+                                     update=":form:dt :form:messages"
+                                     oncomplete="if (args &amp;&amp; !args.validationFailed) PF('salesDialog').hide()"/>
+                    <p:commandButton value="Cancel" icon="pi pi-times"
+                                     onclick="PF('salesDialog').hide()"
+                                     styleClass="ui-button-secondary"
+                                     type="button"/>
+                </f:facet>
+            </p:dialog>
+
+            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                <p:commandButton value="Yes" type="button" styleClass="ui-confirmdialog-yes"
+                                 icon="pi pi-check"/>
+                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary"
+                                 icon="pi pi-times"/>
+            </p:confirmDialog>
+        </h:form>
+    </div>
+</h:body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Products Management</title>
+</h:head>
+<h:body>
+    <h:form>
+        <p:menubar>
+            <p:menuitem value="Home" outcome="/index.xhtml" icon="pi pi-home"/>
+            <p:menuitem value="Products" outcome="/products.xhtml" icon="pi pi-box"/>
+            <p:menuitem value="Salespersons" outcome="/salespersons.xhtml" icon="pi pi-users"/>
+            <p:menuitem value="Sales" outcome="/sales.xhtml" icon="pi pi-shopping-cart"/>
+        </p:menubar>
+    </h:form>
+
+    <h:form id="form">
+        <p:growl id="messages" showDetail="true"/>
+
+        <p:toolbar>
+            <p:toolbarGroup>
+                <p:commandButton value="New" icon="pi pi-plus"
+                                 actionListener="#{productBean.openNew}"
+                                 update=":form:productDialog"
+                                 oncomplete="PF('productDialog').show()"/>
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <p:dataTable id="dt" var="prod" value="#{productBean.products}"
+                     selectionMode="single" selection="#{productBean.selectedProduct}"
+                     rowKey="#{prod.id}" paginator="true" rows="10">
+
+            <p:column headerText="Code" sortBy="#{prod.code}" filterBy="#{prod.code}">
+                <h:outputText value="#{prod.code}"/>
+            </p:column>
+
+            <p:column headerText="Name" sortBy="#{prod.name}" filterBy="#{prod.name}">
+                <h:outputText value="#{prod.name}"/>
+            </p:column>
+
+            <p:column headerText="Category" sortBy="#{prod.category}" filterBy="#{prod.category}">
+                <h:outputText value="#{prod.category}"/>
+            </p:column>
+
+            <p:column headerText="Quantity" sortBy="#{prod.quantity}">
+                <h:outputText value="#{prod.quantity}"/>
+            </p:column>
+
+            <p:column headerText="Price" sortBy="#{prod.price}">
+                <h:outputText value="#{prod.price}">
+                    <f:convertNumber type="currency" currencySymbol="$"/>
+                </h:outputText>
+            </p:column>
+
+            <p:column headerText="Status">
+                <h:outputText value="#{prod.status}"/>
+            </p:column>
+
+            <p:column headerText="Available">
+                <p:selectBooleanCheckbox value="#{prod.available}" disabled="true"/>
+            </p:column>
+
+            <p:column headerText="Actions">
+                <p:commandButton icon="pi pi-pencil"
+                                 update=":form:productDialog"
+                                 oncomplete="PF('productDialog').show()">
+                    <f:setPropertyActionListener value="#{prod}"
+                                                 target="#{productBean.product}"/>
+                </p:commandButton>
+
+                <p:commandButton icon="pi pi-trash"
+                                 styleClass="ui-button-danger"
+                                 update=":form:dt :form:messages"
+                                 actionListener="#{productBean.deleteProduct}">
+                    <f:setPropertyActionListener value="#{prod}"
+                                                 target="#{productBean.selectedProduct}"/>
+                    <p:confirm header="Confirmation" message="Delete this product?"
+                               icon="pi pi-exclamation-triangle"/>
+                </p:commandButton>
+            </p:column>
+        </p:dataTable>
+
+        <p:dialog header="Product Details" widgetVar="productDialog" modal="true"
+                  showEffect="fade" hideEffect="fade" id="productDialog">
+            <p:outputPanel>
+                <p:panelGrid columns="2">
+                    <p:outputLabel for="code" value="Code:"/>
+                    <p:inputText id="code" value="#{productBean.product.code}" required="true"/>
+
+                    <p:outputLabel for="name" value="Name:"/>
+                    <p:inputText id="name" value="#{productBean.product.name}" required="true"/>
+
+                    <p:outputLabel for="category" value="Category:"/>
+                    <p:inputText id="category" value="#{productBean.product.category}"/>
+
+                    <p:outputLabel for="quantity" value="Quantity:"/>
+                    <p:inputNumber id="quantity" value="#{productBean.product.quantity}"
+                                   decimalPlaces="0"/>
+
+                    <p:outputLabel for="price" value="Price:"/>
+                    <p:inputNumber id="price" value="#{productBean.product.price}"
+                                   symbol="$ " decimalPlaces="2"/>
+
+                    <p:outputLabel for="status" value="Status:"/>
+                    <p:inputText id="status" value="#{productBean.product.status}"/>
+
+                    <p:outputLabel for="available" value="Available:"/>
+                    <p:selectBooleanCheckbox id="available" value="#{productBean.product.available}"/>
+                </p:panelGrid>
+            </p:outputPanel>
+
+            <f:facet name="footer">
+                <p:commandButton value="Save" icon="pi pi-check"
+                                 actionListener="#{productBean.saveProduct}"
+                                 update=":form:dt :form:messages"
+                                 oncomplete="PF('productDialog').hide()"/>
+                <p:commandButton value="Cancel" icon="pi pi-times"
+                                 onclick="PF('productDialog').hide()"
+                                 styleClass="ui-button-secondary"/>
+            </f:facet>
+        </p:dialog>
+
+        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+            <p:commandButton value="Yes" type="button" styleClass="ui-confirmdialog-yes"
+                             icon="pi pi-check"/>
+            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary"
+                             icon="pi pi-times"/>
+        </p:confirmDialog>
+    </h:form>
+</h:body>
+</html>

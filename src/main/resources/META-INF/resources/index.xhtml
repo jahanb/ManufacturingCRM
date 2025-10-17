@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Manufacturing CRM</title>
+</h:head>
+<h:body>
+    <h:form>
+        <p:menubar>
+            <p:menuitem value="Home" url="index.xhtml" icon="pi pi-home"/>
+            <p:menuitem value="Products" url="products.xhtml" icon="pi pi-box"/>
+            <p:menuitem value="Salespersons" url="salespersons.xhtml" icon="pi pi-users"/>
+            <p:menuitem value="Sales" url="sales.xhtml" icon="pi pi-shopping-cart"/>
+            <p:menuitem value="Reports" url="graph.xhtml" icon="pi pi-chart-bar"/>
+        </p:menubar>
+    </h:form>
+
+    <div style="margin: 50px; text-align: center;">
+        <h1>Welcome to Manufacturing CRM</h1>
+        <p style="font-size: 18px; margin-top: 20px;">
+            Manage your products, salespersons, and sales efficiently.
+        </p>
+
+        <div style="margin-top: 40px;">
+            <h:form>
+                <p:commandButton value="Manage Products"
+                                 onclick="window.location.href='products.xhtml'; return false;"
+                                 icon="pi pi-box"
+                                 styleClass="ui-button-success"
+                                 style="margin: 10px;"
+                                 type="button"/>
+
+                <p:commandButton value="Manage Salespersons"
+                                 onclick="window.location.href='salespersons.xhtml'; return false;"
+                                 icon="pi pi-users"
+                                 styleClass="ui-button-info"
+                                 style="margin: 10px;"
+                                 type="button"/>
+
+                <p:commandButton value="Manage Sales"
+                                 onclick="window.location.href='sales.xhtml'; return false;"
+                                 icon="pi pi-shopping-cart"
+                                 styleClass="ui-button-warning"
+                                 style="margin: 10px;"
+                                 type="button"/>
+
+                <p:commandButton value="View Reports"
+                                 onclick="window.location.href='graph.xhtml'; return false;"
+                                 icon="pi pi-chart-bar"
+                                 styleClass="ui-button-help"
+                                 style="margin: 10px;"
+                                 type="button"/>
+            </h:form>
+        </div>
+    </div>
+</h:body>
+</html>

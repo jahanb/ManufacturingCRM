@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="jakarta.faces.facelets">
+<h:head>
+    <title>Sales Reports</title>
+    <style>
+        .report-header {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .filters-panel {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .summary-panel {
+            margin: 20px 0;
+        }
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .summary-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .summary-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        /* Custom Bar Chart Styles */
+        .chart-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        .chart-title {
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            height: 400px;
+            gap: 8px;
+            padding: 20px;
+            border-left: 2px solid #333;
+            border-bottom: 2px solid #333;
+            position: relative;
+        }
+        .bar-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 20px;
+        }
+        .bar {
+            width: 100%;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s ease;
+            position: relative;
+            min-height: 5px;
+        }
+        .bar:hover {
+            background: linear-gradient(180deg, #f093fb 0%, #f5576c 100%);
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .bar-label {
+            margin-top: 8px;
+            font-size: 0.85em;
+            font-weight: bold;
+            color: #666;
+        }
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.9em;
+            font-weight: bold;
+            color: #333;
+            background: rgba(255,255,255,0.9);
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+        .chart-axis-label {
+            position: absolute;
+            font-weight: bold;
+            color: #666;
+        }
+        .y-axis-label {
+            left: -80px;
+            top: 50%;
+            transform: rotate(-90deg);
+            transform-origin: center;
+        }
+        .x-axis-label {
+            bottom: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .no-data-message {
+            text-align: center;
+            padding: 60px;
+            color: #999;
+            font-size: 1.2em;
+        }
+    </style>
+</h:head>
+<h:body>
+    <h:form>
+        <p:menubar>
+            <p:menuitem value="Home" url="index.xhtml" icon="pi pi-home"/>
+            <p:menuitem value="Products" url="products.xhtml" icon="pi pi-box"/>
+            <p:menuitem value="Salespersons" url="salespersons.xhtml" icon="pi pi-users"/>
+            <p:menuitem value="Sales" url="sales.xhtml" icon="pi pi-shopping-cart"/>
+            <p:menuitem value="Reports" url="graph.xhtml" icon="pi pi-chart-bar"/>
+        </p:menubar>
+    </h:form>
+
+    <div style="margin: 20px;">
+        <div class="report-header">
+            <h1>📊 Sales Performance Report</h1>
+            <p style="color: #666;">Analyze daily sales performance by salesperson and month</p>
+        </div>
+
+        <h:form id="form">
+            <p:growl id="messages" showDetail="true"/>
+
+            <!-- Filters Panel -->
+            <p:panel header="Report Filters" styleClass="filters-panel">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; align-items: end;">
+                    <div>
+                        <p:outputLabel for="salesperson" value="Select Salesperson:" style="font-weight: bold; display: block; margin-bottom: 8px;"/>
+                        <p:selectOneMenu id="salesperson"
+                                         value="#{graphBean.selectedSalesperson}"
+                                         converter="omnifaces.SelectItemsConverter"
+                                         style="width: 100%;">
+                            <f:selectItems value="#{graphBean.allSalespersons}"
+                                           var="sp"
+                                           itemLabel="#{sp.firstName} #{sp.lastName}"
+                                           itemValue="#{sp}"/>
+                            <p:ajax listener="#{graphBean.onSalespersonChange}"
+                                    update=":form:chartPanel :form:summaryPanel :form:salesTable"/>
+                        </p:selectOneMenu>
+                    </div>
+
+                    <div>
+                        <p:outputLabel for="month" value="Select Month (YYYY-MM):" style="font-weight: bold; display: block; margin-bottom: 8px;"/>
+                        <p:inputMask id="month"
+                                     value="#{graphBean.selectedMonth}"
+                                     mask="9999-99"
+                                     converter="yearMonthConverter"
+                                     placeholder="2025-10"
+                                     style="width: 100%;">
+                            <p:ajax listener="#{graphBean.onMonthChange}"
+                                    update=":form:chartPanel :form:summaryPanel :form:salesTable"/>
+                        </p:inputMask>
+                    </div>
+
+                    <div>
+                        <p:commandButton value="Generate Report"
+                                         icon="pi pi-refresh"
+                                         actionListener="#{graphBean.generateChart}"
+                                         update=":form:chartPanel :form:summaryPanel :form:salesTable"
+                                         styleClass="ui-button-success"
+                                         style="width: 100%;"/>
+                    </div>
+                </div>
+
+                <p style="margin-top: 15px; margin-bottom: 0; color: #666; font-size: 0.9em;">
+                    <i class="pi pi-info-circle"></i> Enter month in format YYYY-MM (e.g., 2025-10 for October 2025).
+                    Chart will automatically update when you change the salesperson or month.
+                </p>
+            </p:panel>
+
+            <!-- Summary Cards -->
+            <p:outputPanel id="summaryPanel">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+                    <div class="summary-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <div class="summary-label">Total Sales</div>
+                        <div class="summary-value">#{graphBean.totalSales}</div>
+                        <div class="summary-label">transactions this month</div>
+                    </div>
+
+                    <div class="summary-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <div class="summary-label">Total Revenue</div>
+                        <div class="summary-value">
+                            <h:outputText value="#{graphBean.totalRevenue}">
+                                <f:convertNumber type="currency" currencySymbol="$" minFractionDigits="2" maxFractionDigits="2"/>
+                            </h:outputText>
+                        </div>
+                        <div class="summary-label">earned this month</div>
+                    </div>
+                </div>
+            </p:outputPanel>
+
+            <!-- Chart Panel -->
+            <p:outputPanel id="chartPanel">
+                <p:panel header="Daily Sales Chart" style="margin-top: 20px;">
+                    <div class="chart-container">
+                        <div class="chart-title">#{graphBean.chartTitle}</div>
+
+                        <h:panelGroup rendered="#{graphBean.chartData != null and not empty graphBean.chartData}">
+                            <div class="bar-chart">
+                                <ui:repeat value="#{graphBean.chartData}" var="data">
+                                    <div class="bar-wrapper">
+                                        <div class="bar" style="height: #{data.barHeight}px;">
+                                            <div class="bar-value" style="display: #{data.salesCount > 0 ? 'block' : 'none'};">
+                                                #{data.salesCount}
+                                            </div>
+                                        </div>
+                                        <div class="bar-label">#{data.day}</div>
+                                    </div>
+                                </ui:repeat>
+                            </div>
+
+                            <div style="text-align: center; margin-top: 20px; color: #666; font-size: 0.9em;">
+                                <strong>X-axis:</strong> Day of Month | <strong>Y-axis:</strong> Number of Sales
+                            </div>
+                        </h:panelGroup>
+
+                        <h:panelGroup rendered="#{graphBean.chartData == null or empty graphBean.chartData}">
+                            <div class="no-data-message">
+                                <i class="pi pi-chart-bar" style="font-size: 3em; display: block; margin-bottom: 20px;"></i>
+                                No data available. Please select a salesperson and month to generate the report.
+                            </div>
+                        </h:panelGroup>
+                    </div>
+                </p:panel>
+            </p:outputPanel>
+
+            <!-- Detailed Sales Table -->
+            <p:panel header="Detailed Sales List" style="margin-top: 20px;" id="salesTable">
+                <p:dataTable var="sale"
+                             value="#{graphBean.filteredSalesList}"
+                             paginator="true"
+                             rows="10"
+                             style="margin-top: 10px;"
+                             emptyMessage="No sales found for the selected criteria">
+
+                    <p:column headerText="Sale Date" sortBy="#{sale.saleDate}">
+                        <h:outputText value="#{sale.saleDate}" rendered="#{sale.saleDate != null}">
+                            <f:convertDateTime pattern="yyyy-MM-dd HH:mm" type="localDateTime"/>
+                        </h:outputText>
+                        <h:outputText value="-" rendered="#{sale.saleDate == null}"/>
+                    </p:column>
+
+                    <p:column headerText="Customer">
+                        <h:outputText value="#{sale.customerName}"/>
+                    </p:column>
+
+                    <p:column headerText="Product">
+                        <h:outputText value="#{sale.product.name}" rendered="#{sale.product != null}"/>
+                        <h:outputText value="-" rendered="#{sale.product == null}"/>
+                    </p:column>
+
+                    <p:column headerText="Quantity" style="text-align: center;">
+                        <h:outputText value="#{sale.quantity}"/>
+                    </p:column>
+
+                    <p:column headerText="Unit Price" style="text-align: right;">
+                        <h:outputText value="#{sale.unitPrice}">
+                            <f:convertNumber type="currency" currencySymbol="$"/>
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column headerText="Total Amount" style="text-align: right;">
+                        <h:outputText value="#{sale.totalAmount}">
+                            <f:convertNumber type="currency" currencySymbol="$"/>
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column headerText="Status" style="text-align: center;">
+                        <p:tag value="#{sale.status}"
+                               severity="#{sale.status eq 'COMPLETED' ? 'success' : (sale.status eq 'PENDING' ? 'warning' : 'danger')}"/>
+                    </p:column>
+                </p:dataTable>
+            </p:panel>
+
+            <!-- Export Options -->
+            <p:panel header="Export Options" style="margin-top: 20px;">
+                <div style="padding: 10px;">
+                    <p:commandButton value="Print Report"
+                                     icon="pi pi-print"
+                                     styleClass="ui-button-info"
+                                     onclick="window.print(); return false;"
+                                     type="button"/>
+
+                    <p style="margin-top: 10px; margin-bottom: 0; color: #666; font-size: 0.9em;">
+                        <i class="pi pi-info-circle"></i> Use the Print button to save as PDF or print the report
+                    </p>
+                </div>
+            </p:panel>
+        </h:form>
+    </div>
+</h:body>
+</html>
