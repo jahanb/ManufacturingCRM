@@ -22,7 +22,8 @@ public class Sales {
 
     @DBRef
     private Product product;
-
+    @DBRef
+    private Customer customer;
     private Integer quantity;
     private Double unitPrice;
     private Double totalAmount;
@@ -30,6 +31,14 @@ public class Sales {
     private String customerName;
     private String status; // PENDING, COMPLETED, CANCELLED
     private String notes;
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+    }
 
     public String getId() {
         return id;

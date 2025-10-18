@@ -1,8 +1,10 @@
 package com.manufacturing.controller;
 
+import com.manufacturing.model.Customer;
 import com.manufacturing.model.Product;
 import com.manufacturing.model.Sales;
 import com.manufacturing.model.Salesperson;
+import com.manufacturing.service.CustomerService;
 import com.manufacturing.service.ProductService;
 import com.manufacturing.service.SalesService;
 import com.manufacturing.service.SalespersonService;
@@ -21,6 +23,8 @@ import java.util.List;
 @ViewScoped
 public class SalesBean implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     @Autowired
     private SalesService salesService;
 
@@ -30,18 +34,26 @@ public class SalesBean implements Serializable {
     @Autowired
     private SalespersonService salespersonService;
 
+    @Autowired
+    private CustomerService customerService;
+
     private List<Sales> salesList;
     private Sales selectedSales;
     private Sales sales;
 
     private List<Product> availableProducts;
     private List<Salesperson> activeSalespersons;
+    private List<Customer> activeCustomers;
+
+    // For adding new customer on the fly
+    private Customer newCustomer;
 
     @PostConstruct
     public void init() {
         loadSales();
         loadDropdowns();
         sales = new Sales();
+        resetNewCustomer();
     }
 
     public void loadSales() {
@@ -51,12 +63,50 @@ public class SalesBean implements Serializable {
     public void loadDropdowns() {
         availableProducts = productService.findAvailableProducts();
         activeSalespersons = salespersonService.findActiveSalespersons();
+        activeCustomers = customerService.findActiveCustomers();
     }
 
     public void openNew() {
         sales = new Sales();
         sales.setSaleDate(LocalDateTime.now());
         sales.setStatus("PENDING");
+        resetNewCustomer();
+    }
+
+    public void openNewCustomerDialog() {
+        resetNewCustomer();
+    }
+
+    private void resetNewCustomer() {
+        newCustomer = new Customer();
+        newCustomer.setActive(true);
+        newCustomer.setCustomerType("REGULAR");
+        newCustomer.setCreatedDate(LocalDateTime.now());
+    }
+
+    public void saveNewCustomer() {
+        try {
+            if (newCustomer.getName() == null || newCustomer.getName().trim().isEmpty()) {
+                FacesContext.getCurrentInstance().addMessage(null,
+                        new FacesMessage(FacesMessage.SEVERITY_WARN, "Warning",
+                                "Customer name is required"));
+                return;
+            }
+
+            Customer savedCustomer = customerService.save(newCustomer);
+            loadDropdowns(); // Reload customers list
+            sales.setCustomer(savedCustomer); // Set the newly created customer
+
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_INFO, "Success",
+                            "Customer created and selected"));
+
+            resetNewCustomer();
+        } catch (Exception e) {
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error",
+                            "Failed to create customer: " + e.getMessage()));
+        }
     }
 
     public void onProductChange() {
@@ -78,20 +128,23 @@ public class SalesBean implements Serializable {
 
     public void saveSales() {
         try {
-            if (sales.getSalesperson() == null || sales.getProduct() == null) {
+            if (sales.getSalesperson() == null || sales.getProduct() == null || sales.getCustomer() == null) {
                 FacesContext.getCurrentInstance().addMessage(null,
-                        new FacesMessage(FacesMessage.SEVERITY_WARN, "Warning", "Please select both product and salesperson"));
+                        new FacesMessage(FacesMessage.SEVERITY_WARN, "Warning",
+                                "Please select salesperson, product, and customer"));
                 return;
             }
 
             salesService.save(sales);
             loadSales();
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_INFO, "Success", "Sales saved successfully"));
+                    new FacesMessage(FacesMessage.SEVERITY_INFO, "Success",
+                            "Sales saved successfully"));
             sales = new Sales();
         } catch (Exception e) {
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "Failed to save sales: " + e.getMessage()));
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error",
+                            "Failed to save sales: " + e.getMessage()));
         }
     }
 
@@ -101,10 +154,12 @@ public class SalesBean implements Serializable {
             salesList.remove(selectedSales);
             selectedSales = null;
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_INFO, "Success", "Sales deleted successfully"));
+                    new FacesMessage(FacesMessage.SEVERITY_INFO, "Success",
+                            "Sales deleted successfully"));
         } catch (Exception e) {
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "Failed to delete sales"));
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error",
+                            "Failed to delete sales"));
         }
     }
 
@@ -147,5 +202,21 @@ public class SalesBean implements Serializable {
 
     public void setActiveSalespersons(List<Salesperson> activeSalespersons) {
         this.activeSalespersons = activeSalespersons;
+    }
+
+    public List<Customer> getActiveCustomers() {
+        return activeCustomers;
+    }
+
+    public void setActiveCustomers(List<Customer> activeCustomers) {
+        this.activeCustomers = activeCustomers;
+    }
+
+    public Customer getNewCustomer() {
+        return newCustomer;
+    }
+
+    public void setNewCustomer(Customer newCustomer) {
+        this.newCustomer = newCustomer;
     }
 }

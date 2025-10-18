@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
       xmlns:p="http://primefaces.org/ui">
 <h:head>
     <title>Manufacturing CRM</title>
@@ -12,15 +13,40 @@
             <p:menuitem value="Products" url="products.xhtml" icon="pi pi-box"/>
             <p:menuitem value="Salespersons" url="salespersons.xhtml" icon="pi pi-users"/>
             <p:menuitem value="Sales" url="sales.xhtml" icon="pi pi-shopping-cart"/>
+            <p:menuitem value="Customers" url="customers.xhtml" icon="pi pi-user"/>
             <p:menuitem value="Reports" url="graph.xhtml" icon="pi pi-chart-bar"/>
+
+            <f:facet name="options">
+                <p:outputLabel value="Welcome, #{authBean.currentUser.firstName}!"
+                               style="margin-right: 20px; font-weight: bold;"/>
+                <p:commandButton value="Users"
+                                 onclick="window.location.href='users.xhtml'; return false;"
+                                 icon="pi pi-users"
+                                 styleClass="ui-button-info"
+                                 rendered="#{authBean.admin}"
+                                 type="button"
+                                 style="margin-right: 10px;"/>
+                <p:commandButton value="Logout"
+                                 action="#{authBean.logout}"
+                                 icon="pi pi-sign-out"
+                                 styleClass="ui-button-danger"/>
+            </f:facet>
         </p:menubar>
     </h:form>
 
     <div style="margin: 50px; text-align: center;">
         <h1>Welcome to Manufacturing CRM</h1>
         <p style="font-size: 18px; margin-top: 20px;">
-            Manage your products, salespersons, and sales efficiently.
+            Manage your products, salespersons, customers, and sales efficiently.
         </p>
+
+        <h:panelGroup rendered="#{authBean.currentUser != null}">
+            <p style="font-size: 16px; color: #666; margin-top: 10px;">
+                Logged in as: <strong>#{authBean.currentUser.firstName} #{authBean.currentUser.lastName}</strong>
+                <br/>
+                Role: <strong>#{authBean.currentUser.role}</strong>
+            </p>
+        </h:panelGroup>
 
         <div style="margin-top: 40px;">
             <h:form>
@@ -38,10 +64,17 @@
                                  style="margin: 10px;"
                                  type="button"/>
 
+                <p:commandButton value="Manage Customers"
+                                 onclick="window.location.href='customers.xhtml'; return false;"
+                                 icon="pi pi-user"
+                                 styleClass="ui-button-warning"
+                                 style="margin: 10px;"
+                                 type="button"/>
+
                 <p:commandButton value="Manage Sales"
                                  onclick="window.location.href='sales.xhtml'; return false;"
                                  icon="pi pi-shopping-cart"
-                                 styleClass="ui-button-warning"
+                                 styleClass="ui-button-secondary"
                                  style="margin: 10px;"
                                  type="button"/>
 
