@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Login - Manufacturing CRM</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            width: 400px;
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .login-header h1 {
+            color: #333;
+            margin: 0 0 10px 0;
+        }
+        .login-header p {
+            color: #666;
+            margin: 0;
+        }
+        .login-form {
+            margin-top: 20px;
+        }
+        .form-field {
+            margin-bottom: 20px;
+        }
+        .form-field label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: bold;
+        }
+    </style>
+</h:head>
+<h:body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>🏭 Manufacturing CRM</h1>
+            <p>Please login to continue</p>
+        </div>
+
+        <h:form id="loginForm" styleClass="login-form">
+            <p:growl id="messages" showDetail="true"/>
+
+            <div class="form-field">
+                <p:outputLabel for="username" value="Username:"/>
+                <p:inputText id="username"
+                             value="#{authBean.username}"
+                             required="true"
+                             style="width: 100%;"
+                             placeholder="Enter your username"/>
+            </div>
+
+            <div class="form-field">
+                <p:outputLabel for="password" value="Password:"/>
+                <p:password id="password"
+                            value="#{authBean.password}"
+                            required="true"
+                            feedback="false"
+                            style="width: 100%;"
+                            placeholder="Enter your password"/>
+            </div>
+
+            <div class="form-field">
+                <p:selectBooleanCheckbox id="rememberMe"
+                                         value="#{authBean.rememberMe}"/>
+                <p:outputLabel for="rememberMe" value=" Remember Me" style="margin-left: 10px;"/>
+            </div>
+
+            <p:commandButton value="Login"
+                             action="#{authBean.login}"
+                             update="messages"
+                             icon="pi pi-sign-in"
+                             style="width: 100%;"
+                             styleClass="ui-button-success"/>
+
+            <p style="text-align: center; margin-top: 20px; color: #666; font-size: 0.9em;">
+                Default login: admin / admin123
+            </p>
+        </h:form>
+    </div>
+</h:body>
+</html>

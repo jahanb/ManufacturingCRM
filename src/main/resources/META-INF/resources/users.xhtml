@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>User Management</title>
+</h:head>
+<h:body>
+    <h:form>
+        <p:menubar>
+            <p:menuitem value="Home" url="index.xhtml" icon="pi pi-home"/>
+            <p:menuitem value="Users" url="users.xhtml" icon="pi pi-users" rendered="#{authBean.admin}"/>
+
+            <f:facet name="options">
+                <p:outputLabel value="Welcome, #{authBean.currentUser.firstName}!"
+                               style="margin-right: 20px; font-weight: bold;"/>
+                <p:commandButton value="Logout"
+                                 action="#{authBean.logout}"
+                                 icon="pi pi-sign-out"
+                                 styleClass="ui-button-danger"/>
+            </f:facet>
+        </p:menubar>
+    </h:form>
+
+    <div style="margin: 20px;">
+        <h2>👥 User Management (Admin Only)</h2>
+
+        <h:form id="form">
+            <p:growl id="messages" showDetail="true"/>
+
+            <p:toolbar style="margin-top: 20px;">
+                <p:toolbarGroup>
+                    <p:commandButton value="New User" icon="pi pi-user-plus"
+                                     actionListener="#{userBean.openNew}"
+                                     update=":form:userDialog"
+                                     oncomplete="PF('userDialog').show()"/>
+                </p:toolbarGroup>
+            </p:toolbar>
+
+            <p:dataTable id="dt" var="user" value="#{userBean.users}"
+                         selectionMode="single" selection="#{userBean.selectedUser}"
+                         rowKey="#{user.id}" paginator="true" rows="10"
+                         style="margin-top: 20px;">
+
+                <p:column headerText="Username" sortBy="#{user.username}">
+                    <h:outputText value="#{user.username}"/>
+                </p:column>
+
+                <p:column headerText="First Name">
+                    <h:outputText value="#{user.firstName}"/>
+                </p:column>
+
+                <p:column headerText="Last Name">
+                    <h:outputText value="#{user.lastName}"/>
+                </p:column>
+
+                <p:column headerText="Email">
+                    <h:outputText value="#{user.email}"/>
+                </p:column>
+
+                <p:column headerText="Role">
+                    <p:tag value="#{user.role}"
+                           severity="#{user.role eq 'ADMIN' ? 'danger' : (user.role eq 'MANAGER' ? 'warning' : 'info')}"/>
+                </p:column>
+
+                <p:column headerText="Active">
+                    <p:selectBooleanCheckbox value="#{user.active}" disabled="true"/>
+                </p:column>
+
+                <p:column headerText="Last Login">
+                    <h:outputText value="#{user.lastLogin}" rendered="#{user.lastLogin != null}">
+                        <f:convertDateTime pattern="yyyy-MM-dd HH:mm" type="localDateTime"/>
+                    </h:outputText>
+                    <h:outputText value="Never" rendered="#{user.lastLogin == null}"/>
+                </p:column>
+
+                <p:column headerText="Actions" style="width: 120px;">
+                    <p:commandButton icon="pi pi-pencil"
+                                     update=":form:userDialog"
+                                     oncomplete="PF('userDialog').show()"
+                                     styleClass="ui-button-warning"
+                                     style="margin-right: 5px;">
+                        <f:setPropertyActionListener value="#{user}"
+                                                     target="#{userBean.user}"/>
+                    </p:commandButton>
+
+                    <p:commandButton icon="pi pi-trash"
+                                     styleClass="ui-button-danger"
+                                     update=":form:dt :form:messages"
+                                     actionListener="#{userBean.deleteUser}">
+                        <f:setPropertyActionListener value="#{user}"
+                                                     target="#{userBean.selectedUser}"/>
+                        <p:confirm header="Confirmation" message="Delete this user?"
+                                   icon="pi pi-exclamation-triangle"/>
+                    </p:commandButton>
+                </p:column>
+            </p:dataTable>
+
+            <p:dialog header="User Details" widgetVar="userDialog" modal="true"
+                      showEffect="fade" hideEffect="fade" id="userDialog" width="600">
+                <p:outputPanel>
+                    <p:panelGrid columns="2" style="margin-top: 20px;">
+                        <p:outputLabel for="username" value="Username:"/>
+                        <p:inputText id="username" value="#{userBean.user.username}"
+                                     required="true" style="width: 100%;"
+                                     disabled="#{userBean.user.id != null}"/>
+
+                        <p:outputLabel for="password" value="Password:"/>
+                        <p:password id="password" value="#{userBean.user.password}"
+                                    required="#{userBean.user.id == null}"
+                                    feedback="true" style="width: 100%;"
+                                    placeholder="#{userBean.user.id != null ? 'Leave blank to keep current' : 'Enter password'}"/>
+
+                        <p:outputLabel for="firstName" value="First Name:"/>
+                        <p:inputText id="firstName" value="#{userBean.user.firstName}"
+                                     required="true" style="width: 100%;"/>
+
+                        <p:outputLabel for="lastName" value="Last Name:"/>
+                        <p:inputText id="lastName" value="#{userBean.user.lastName}"
+                                     required="true" style="width: 100%;"/>
+
+                        <p:outputLabel for="email" value="Email:"/>
+                        <p:inputText id="email" value="#{userBean.user.email}"
+                                     required="true" style="width: 100%;"/>
+
+                        <p:outputLabel for="role" value="Role:"/>
+                        <p:selectOneMenu id="role" value="#{userBean.user.role}"
+                                         required="true" style="width: 100%;">
+                            <f:selectItem itemLabel="ADMIN" itemValue="ADMIN"/>
+                            <f:selectItem itemLabel="MANAGER" itemValue="MANAGER"/>
+                            <f:selectItem itemLabel="SALESPERSON" itemValue="SALESPERSON"/>
+                            <f:selectItem itemLabel="VIEWER" itemValue="VIEWER"/>
+                        </p:selectOneMenu>
+
+                        <p:outputLabel for="activeUser" value="Active:"/>
+                        <p:selectBooleanCheckbox id="activeUser" value="#{userBean.user.active}"/>
+                    </p:panelGrid>
+                </p:outputPanel>
+
+                <f:facet name="footer">
+                    <p:commandButton value="Save" icon="pi pi-check"
+                                     actionListener="#{userBean.saveUser}"
+                                     update=":form:dt :form:messages"
+                                     oncomplete="PF('userDialog').hide()"/>
+                    <p:commandButton value="Cancel" icon="pi pi-times"
+                                     onclick="PF('userDialog').hide()"
+                                     styleClass="ui-button-secondary"
+                                     type="button"/>
+                </f:facet>
+            </p:dialog>
+
+            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                <p:commandButton value="Yes" type="button" styleClass="ui-confirmdialog-yes"
+                                 icon="pi pi-check"/>
+                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary"
+                                 icon="pi pi-times"/>
+            </p:confirmDialog>
+        </h:form>
+    </div>
+</h:body>
+</html>

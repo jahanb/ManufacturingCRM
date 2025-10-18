@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Customers Management</title>
+</h:head>
+<h:body>
+    <h:form>
+        <p:menubar>
+            <p:menuitem value="Home" url="index.xhtml" icon="pi pi-home"/>
+            <p:menuitem value="Products" url="products.xhtml" icon="pi pi-box"/>
+            <p:menuitem value="Salespersons" url="salespersons.xhtml" icon="pi pi-users"/>
+            <p:menuitem value="Sales" url="sales.xhtml" icon="pi pi-shopping-cart"/>
+            <p:menuitem value="Customers" url="customers.xhtml" icon="pi pi-user"/>
+            <p:menuitem value="Reports" url="graph.xhtml" icon="pi pi-chart-bar"/>
+
+            <f:facet name="options">
+                <p:outputLabel value="Welcome, #{authBean.currentUser.firstName}!"
+                               style="margin-right: 20px; font-weight: bold;"/>
+                <p:commandButton value="Logout"
+                                 action="#{authBean.logout}"
+                                 icon="pi pi-sign-out"
+                                 styleClass="ui-button-danger"/>
+            </f:facet>
+        </p:menubar>
+    </h:form>
+
+    <div style="margin: 20px;">
+        <h2>Customers Management</h2>
+
+        <h:form id="form">
+            <p:growl id="messages" showDetail="true"/>
+
+            <p:toolbar style="margin-top: 20px;">
+                <p:toolbarGroup>
+                    <p:commandButton value="New Customer" icon="pi pi-plus"
+                                     actionListener="#{customerBean.openNew}"
+                                     update=":form:customerDialog"
+                                     oncomplete="PF('customerDialog').show()"/>
+                </p:toolbarGroup>
+            </p:toolbar>
+
+            <p:dataTable id="dt" var="cust" value="#{customerBean.customers}"
+                         selectionMode="single" selection="#{customerBean.selectedCustomer}"
+                         rowKey="#{cust.id}" paginator="true" rows="10"
+                         style="margin-top: 20px;">
+
+                <p:column headerText="Name" sortBy="#{cust.name}" filterBy="#{cust.name}">
+                    <h:outputText value="#{cust.name}"/>
+                </p:column>
+
+                <p:column headerText="Company" sortBy="#{cust.companyName}">
+                    <h:outputText value="#{cust.companyName}"/>
+                </p:column>
+
+                <p:column headerText="Email">
+                    <h:outputText value="#{cust.email}"/>
+                </p:column>
+
+                <p:column headerText="Phone">
+                    <h:outputText value="#{cust.phone}"/>
+                </p:column>
+
+                <p:column headerText="City">
+                    <h:outputText value="#{cust.city}"/>
+                </p:column>
+
+                <p:column headerText="Type">
+                    <p:tag value="#{cust.customerType}"
+                           severity="#{cust.customerType eq 'VIP' ? 'danger' : (cust.customerType eq 'WHOLESALE' ? 'warning' : 'info')}"/>
+                </p:column>
+
+                <p:column headerText="Active">
+                    <p:selectBooleanCheckbox value="#{cust.active}" disabled="true"/>
+                </p:column>
+
+                <p:column headerText="Actions" style="width: 120px;">
+                    <p:commandButton icon="pi pi-pencil"
+                                     update=":form:customerDialog"
+                                     oncomplete="PF('customerDialog').show()"
+                                     styleClass="ui-button-warning"
+                                     style="margin-right: 5px;">
+                        <f:setPropertyActionListener value="#{cust}"
+                                                     target="#{customerBean.customer}"/>
+                    </p:commandButton>
+
+                    <p:commandButton icon="pi pi-trash"
+                                     styleClass="ui-button-danger"
+                                     update=":form:dt :form:messages"
+                                     actionListener="#{customerBean.deleteCustomer}">
+                        <f:setPropertyActionListener value="#{cust}"
+                                                     target="#{customerBean.selectedCustomer}"/>
+                        <p:confirm header="Confirmation" message="Delete this customer?"
+                                   icon="pi pi-exclamation-triangle"/>
+                    </p:commandButton>
+                </p:column>
+            </p:dataTable>
+
+            <p:dialog header="Customer Details" widgetVar="customerDialog" modal="true"
+                      showEffect="fade" hideEffect="fade" id="customerDialog" width="600">
+                <p:outputPanel>
+                    <p:panelGrid columns="2" style="margin-top: 20px;">
+                        <p:outputLabel for="name" value="Name:"/>
+                        <p:inputText id="name" value="#{customerBean.customer.name}" required="true" style="width: 100%;"/>
+
+                        <p:outputLabel for="companyName" value="Company:"/>
+                        <p:inputText id="companyName" value="#{customerBean.customer.companyName}" style="width: 100%;"/>
+
+                        <p:outputLabel for="email" value="Email:"/>
+                        <p:inputText id="email" value="#{customerBean.customer.email}" style="width: 100%;"/>
+
+                        <p:outputLabel for="phone" value="Phone:"/>
+                        <p:inputText id="phone" value="#{customerBean.customer.phone}" style="width: 100%;"/>
+
+                        <p:outputLabel for="address" value="Address:"/>
+                        <p:inputTextarea id="address" value="#{customerBean.customer.address}" rows="2" style="width: 100%;"/>
+
+                        <p:outputLabel for="city" value="City:"/>
+                        <p:inputText id="city" value="#{customerBean.customer.city}" style="width: 100%;"/>
+
+                        <p:outputLabel for="country" value="Country:"/>
+                        <p:inputText id="country" value="#{customerBean.customer.country}" style="width: 100%;"/>
+
+                        <p:outputLabel for="customerType" value="Type:"/>
+                        <p:selectOneMenu id="customerType" value="#{customerBean.customer.customerType}" style="width: 100%;">
+                            <f:selectItem itemLabel="REGULAR" itemValue="REGULAR"/>
+                            <f:selectItem itemLabel="VIP" itemValue="VIP"/>
+                            <f:selectItem itemLabel="WHOLESALE" itemValue="WHOLESALE"/>
+                        </p:selectOneMenu>
+
+                        <p:outputLabel for="notes" value="Notes:"/>
+                        <p:inputTextarea id="notes" value="#{customerBean.customer.notes}" rows="3" style="width: 100%;"/>
+
+                        <p:outputLabel for="active" value="Active:"/>
+                        <p:selectBooleanCheckbox id="active" value="#{customerBean.customer.active}"/>
+                    </p:panelGrid>
+                </p:outputPanel>
+
+                <f:facet name="footer">
+                    <p:commandButton value="Save" icon="pi pi-check"
+                                     actionListener="#{customerBean.saveCustomer}"
+                                     update=":form:dt :form:messages"
+                                     oncomplete="PF('customerDialog').hide()"/>
+                    <p:commandButton value="Cancel" icon="pi pi-times"
+                                     onclick="PF('customerDialog').hide()"
+                                     styleClass="ui-button-secondary"
+                                     type="button"/>
+                </f:facet>
+            </p:dialog>
+
+            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                <p:commandButton value="Yes" type="button" styleClass="ui-confirmdialog-yes"
+                                 icon="pi pi-check"/>
+                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary"
+                                 icon="pi pi-times"/>
+            </p:confirmDialog>
+        </h:form>
+    </div>
+</h:body>
+</html>
