@@ -4,88 +4,152 @@
       xmlns:f="jakarta.faces.core"
       xmlns:p="http://primefaces.org/ui">
 <h:head>
-    <title>Manufacturing CRM</title>
+    <title>Manufacturing CRM - Home</title>
 </h:head>
 <h:body>
+    <!-- Top Navigation Menu -->
     <h:form>
         <p:menubar>
             <p:menuitem value="Home" url="index.xhtml" icon="pi pi-home"/>
-            <p:menuitem value="Products" url="products.xhtml" icon="pi pi-box"/>
-            <p:menuitem value="Salespersons" url="salespersons.xhtml" icon="pi pi-users"/>
-            <p:menuitem value="Sales" url="sales.xhtml" icon="pi pi-shopping-cart"/>
-            <p:menuitem value="Customers" url="customers.xhtml" icon="pi pi-user"/>
-            <p:menuitem value="Reports" url="graph.xhtml" icon="pi pi-chart-bar"/>
+            <p:menuitem value="Products" url="products.xhtml" icon="pi pi-box"
+                        rendered="#{authBean.loggedIn}"/>
+            <p:menuitem value="Salespersons" url="salespersons.xhtml" icon="pi pi-users"
+                        rendered="#{authBean.loggedIn}"/>
+            <p:menuitem value="Sales" url="sales.xhtml" icon="pi pi-shopping-cart"
+                        rendered="#{authBean.loggedIn}"/>
+            <p:menuitem value="Customers" url="customers.xhtml" icon="pi pi-user"
+                        rendered="#{authBean.loggedIn}"/>
+            <p:menuitem value="Reports" url="graph.xhtml" icon="pi pi-chart-bar"
+                        rendered="#{authBean.loggedIn}"/>
 
             <f:facet name="options">
-                <p:outputLabel value="Welcome, #{authBean.currentUser.firstName}!"
-                               style="margin-right: 20px; font-weight: bold;"/>
-                <p:commandButton value="Users"
-                                 onclick="window.location.href='users.xhtml'; return false;"
-                                 icon="pi pi-users"
-                                 styleClass="ui-button-info"
-                                 rendered="#{authBean.admin}"
-                                 type="button"
-                                 style="margin-right: 10px;"/>
-                <p:commandButton value="Logout"
-                                 action="#{authBean.logout}"
-                                 icon="pi pi-sign-out"
-                                 styleClass="ui-button-danger"/>
+                <!-- Show when logged in -->
+                <h:panelGroup rendered="#{authBean.loggedIn}">
+                    <span style="margin-right: 20px; font-weight: bold; color: #333;">
+                        Welcome, #{authBean.currentUser.firstName}!
+                    </span>
+                    <p:commandButton value="Users"
+                                     onclick="window.location.href='users.xhtml'; return false;"
+                                     icon="pi pi-users"
+                                     styleClass="ui-button-info"
+                                     rendered="#{authBean.admin}"
+                                     type="button"
+                                     style="margin-right: 10px;"/>
+                    <p:commandButton value="Logout"
+                                     action="#{authBean.logout}"
+                                     icon="pi pi-sign-out"
+                                     styleClass="ui-button-danger"
+                                     ajax="false"/>
+                </h:panelGroup>
+
+                <!-- Show when not logged in -->
+                <h:panelGroup rendered="#{!authBean.loggedIn}">
+                    <p:commandButton value="Login"
+                                     onclick="window.location.href='login.xhtml'; return false;"
+                                     icon="pi pi-sign-in"
+                                     styleClass="ui-button-success"
+                                     type="button"/>
+                </h:panelGroup>
             </f:facet>
         </p:menubar>
     </h:form>
 
+    <!-- Main Content Area -->
     <div style="margin: 50px; text-align: center;">
-        <h1>Welcome to Manufacturing CRM</h1>
-        <p style="font-size: 18px; margin-top: 20px;">
+        <!-- Success/Error Messages -->
+        <h:form>
+            <p:messages id="messages" showDetail="true" closable="true"/>
+        </h:form>
+
+        <h1 style="color: #333; margin-bottom: 10px;">
+            🏭 Welcome to Manufacturing CRM
+        </h1>
+        <p style="font-size: 18px; color: #666; margin-top: 20px;">
             Manage your products, salespersons, customers, and sales efficiently.
         </p>
 
-        <h:panelGroup rendered="#{authBean.currentUser != null}">
-            <p style="font-size: 16px; color: #666; margin-top: 10px;">
-                Logged in as: <strong>#{authBean.currentUser.firstName} #{authBean.currentUser.lastName}</strong>
-                <br/>
-                Role: <strong>#{authBean.currentUser.role}</strong>
-            </p>
+        <!-- Show user info when logged in -->
+        <h:panelGroup rendered="#{authBean.loggedIn}">
+            <div style="margin: 30px auto; padding: 20px; background: #f0f8ff; border-radius: 8px; max-width: 600px;">
+                <p style="font-size: 16px; color: #333; margin: 5px 0;">
+                    <strong>Logged in as:</strong> #{authBean.currentUser.firstName} #{authBean.currentUser.lastName}
+                </p>
+                <p style="font-size: 16px; color: #333; margin: 5px 0;">
+                    <strong>Role:</strong>
+                    <span style="background: #4CAF50; color: white; padding: 5px 15px; border-radius: 15px; font-weight: bold;">
+                        #{authBean.currentUser.role}
+                    </span>
+                </p>
+                <p style="font-size: 14px; color: #666; margin-top: 15px;">
+                    Choose a module below to get started
+                </p>
+            </div>
         </h:panelGroup>
 
-        <div style="margin-top: 40px;">
-            <h:form>
-                <p:commandButton value="Manage Products"
-                                 onclick="window.location.href='products.xhtml'; return false;"
-                                 icon="pi pi-box"
-                                 styleClass="ui-button-success"
-                                 style="margin: 10px;"
-                                 type="button"/>
+        <!-- Show login prompt when not logged in -->
+        <h:panelGroup rendered="#{!authBean.loggedIn}">
+            <div style="margin: 30px auto; padding: 30px; background: #fff3cd; border-radius: 8px; max-width: 600px;">
+                <p style="font-size: 18px; color: #856404; margin-bottom: 20px;">
+                    <i class="pi pi-info-circle" style="font-size: 24px;"></i>
+                    <br/>
+                    Please login to access the system
+                </p>
+                <h:form>
+                    <p:commandButton value="Go to Login Page"
+                                     onclick="window.location.href='login.xhtml'; return false;"
+                                     icon="pi pi-sign-in"
+                                     styleClass="ui-button-success"
+                                     style="font-size: 16px; padding: 12px 30px;"
+                                     type="button"/>
+                </h:form>
+            </div>
+        </h:panelGroup>
 
-                <p:commandButton value="Manage Salespersons"
-                                 onclick="window.location.href='salespersons.xhtml'; return false;"
-                                 icon="pi pi-users"
-                                 styleClass="ui-button-info"
-                                 style="margin: 10px;"
-                                 type="button"/>
+        <!-- Quick Access Buttons - Only when logged in -->
+        <h:panelGroup rendered="#{authBean.loggedIn}">
+            <div style="margin-top: 50px;">
+                <h3 style="color: #333; margin-bottom: 30px;">Quick Access</h3>
 
-                <p:commandButton value="Manage Customers"
-                                 onclick="window.location.href='customers.xhtml'; return false;"
-                                 icon="pi pi-user"
-                                 styleClass="ui-button-warning"
-                                 style="margin: 10px;"
-                                 type="button"/>
+                <h:form>
+                    <div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; max-width: 800px; margin: 0 auto;">
+                        <p:commandButton value="Products"
+                                         onclick="window.location.href='products.xhtml'; return false;"
+                                         icon="pi pi-box"
+                                         styleClass="ui-button-success"
+                                         style="min-width: 180px; padding: 15px;"
+                                         type="button"/>
 
-                <p:commandButton value="Manage Sales"
-                                 onclick="window.location.href='sales.xhtml'; return false;"
-                                 icon="pi pi-shopping-cart"
-                                 styleClass="ui-button-secondary"
-                                 style="margin: 10px;"
-                                 type="button"/>
+                        <p:commandButton value="Salespersons"
+                                         onclick="window.location.href='salespersons.xhtml'; return false;"
+                                         icon="pi pi-users"
+                                         styleClass="ui-button-info"
+                                         style="min-width: 180px; padding: 15px;"
+                                         type="button"/>
 
-                <p:commandButton value="View Reports"
-                                 onclick="window.location.href='graph.xhtml'; return false;"
-                                 icon="pi pi-chart-bar"
-                                 styleClass="ui-button-help"
-                                 style="margin: 10px;"
-                                 type="button"/>
-            </h:form>
-        </div>
+                        <p:commandButton value="Customers"
+                                         onclick="window.location.href='customers.xhtml'; return false;"
+                                         icon="pi pi-user"
+                                         styleClass="ui-button-warning"
+                                         style="min-width: 180px; padding: 15px;"
+                                         type="button"/>
+
+                        <p:commandButton value="Sales"
+                                         onclick="window.location.href='sales.xhtml'; return false;"
+                                         icon="pi pi-shopping-cart"
+                                         styleClass="ui-button-secondary"
+                                         style="min-width: 180px; padding: 15px;"
+                                         type="button"/>
+
+                        <p:commandButton value="Reports"
+                                         onclick="window.location.href='graph.xhtml'; return false;"
+                                         icon="pi pi-chart-bar"
+                                         styleClass="ui-button-help"
+                                         style="min-width: 180px; padding: 15px;"
+                                         type="button"/>
+                    </div>
+                </h:form>
+            </div>
+        </h:panelGroup>
     </div>
 </h:body>
 </html>

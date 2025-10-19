@@ -47,6 +47,12 @@
             color: #555;
             font-weight: bold;
         }
+        .register-link {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
     </style>
 </h:head>
 <h:body>
@@ -57,7 +63,7 @@
         </div>
 
         <h:form id="loginForm" styleClass="login-form">
-            <p:growl id="messages" showDetail="true"/>
+            <p:messages id="messages" showDetail="true"/>
 
             <div class="form-field">
                 <p:outputLabel for="username" value="Username:"/>
@@ -85,14 +91,26 @@
             </div>
 
             <p:commandButton value="Login"
-                             action="#{authBean.login}"
-                             update="messages"
+                             actionListener="#{authBean.login}"
                              icon="pi pi-sign-in"
                              style="width: 100%;"
-                             styleClass="ui-button-success"/>
+                             styleClass="ui-button-success"
+                             ajax="false"/>
 
-            <p style="text-align: center; margin-top: 20px; color: #666; font-size: 0.9em;">
-                Default login: admin / admin123
+            <div class="register-link">
+                <p style="color: #666; font-size: 0.9em; margin-bottom: 10px;">
+                    Don't have an account?
+                </p>
+                <p:commandButton value="Register New Account"
+                                 onclick="window.location.href='register.xhtml'; return false;"
+                                 icon="pi pi-user-plus"
+                                 style="width: 100%;"
+                                 styleClass="ui-button-info"
+                                 type="button"/>
+            </div>
+
+            <p style="text-align: center; margin-top: 15px; color: #999; font-size: 0.85em;">
+                Default admin: admin / admin123
             </p>
         </h:form>
     </div>

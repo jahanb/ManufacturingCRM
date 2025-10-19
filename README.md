@@ -6,54 +6,59 @@ Manufacturing CRM system with:
 ✅ Beautiful Animated Reports & Charts
 ✅ MongoDB Integration
 ✅ Full CRUD Operations
+ Manufacturing CRM 
+✅ User Authentication System
 
-Next steps 
-
-Export to Excel/PDF
-Email notifications
-User authentication
-More advanced analytics
-Dashboard with multiple charts
-Inventory alerts
-Role-Based Access
-
-1. Login System
-
-Username/password authentication
-Password encryption using BCrypt
-Remember Me option (24h vs 30min session)
+Login/Logout
 Session management
-Auto-redirect to login if not authenticated
+Password encryption (BCrypt)
+Remember Me functionality
 
-2. User Management (Admin Only)
+✅ User Registration
 
-Create new users
-Assign roles: ADMIN, MANAGER, SALESPERSON, VIEWER
-Activate/deactivate users
-View last login time
-Edit user details
-Delete users
+Self-registration with VIEWER role (read-only)
+Admin can upgrade roles later
 
-3. Customer Management
+✅ Role-Based Access Control
 
-Full CRUD operations
-Customer types: REGULAR, VIP, WHOLESALE
-Company information
-Contact details
-Address information
-Notes field
+ADMIN - Full access including user management
+MANAGER - All features except user management
+SALESPERSON - Can create sales and view reports
+VIEWER - Read-only access
 
-4. Sales with Customer
+✅ Complete CRUD Operations
 
-Customer dropdown - Select from existing customers
-"+" button - Add new customer on the fly
-New customer dialog opens, saves, and auto-selects
-All existing sales features retained
+Products
+Salespersons
+Customers
+Sales
+Users (admin only)
 
-5. Role-Based Access
+✅ Advanced Features
 
-ADMIN: Full access + user management
-MANAGER: All features except user management
-SALESPERSON: Can create sales, view reports
-VIEWER: Read-only access
+Customer dropdown in sales with "Add New" option
+Sales reports with beautiful charts
+MongoDB with DBRef relationships
+Automatic calculations (total = quantity × price)
+Data validation
+Confirmation dialogs
 
+✅ Professional UI
+
+PrimeFaces Saga theme
+Responsive design
+Color-coded status tags
+Clean navigation
+Success/error messages
+
+✅ Reports & Analytics
+Features:
+
+📊 Interactive Bar Chart - Daily sales visualization
+📅 Month Selection - Filter by any month (YYYY-MM format)
+👤 Salesperson Filter - View performance by individual salesperson
+📈 Summary Cards - Total sales count and revenue
+📋 Detailed Sales Table - Complete transaction list with filters
+🖨️ Print Functionality - Print or save reports as PDF
+🎨 Beautiful CSS Charts - Animated gradient bars with hover effects
+🔄 Auto-refresh - Chart updates when filters change

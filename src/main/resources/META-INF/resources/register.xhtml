@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Register - Manufacturing CRM</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .register-container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            width: 500px;
+            max-width: 100%;
+        }
+        .register-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .register-header h1 {
+            color: #333;
+            margin: 0 0 10px 0;
+        }
+        .register-header p {
+            color: #666;
+            margin: 0;
+        }
+        .register-form {
+            margin-top: 20px;
+        }
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .info-box p {
+            margin: 0;
+            color: #1976D2;
+            font-size: 0.9em;
+        }
+    </style>
+</h:head>
+<h:body>
+    <div class="register-container">
+        <div class="register-header">
+            <h1>🏭 Register New Account</h1>
+            <p>Create a read-only viewer account</p>
+        </div>
+
+        <div class="info-box">
+            <p><strong>ℹ️ Note:</strong> Your account will be created with VIEWER role (read-only access).
+                Contact an administrator to upgrade your permissions.</p>
+        </div>
+
+        <h:form id="registerForm" styleClass="register-form">
+            <p:growl id="messages" showDetail="true"/>
+
+            <p:panelGrid columns="2" style="width: 100%; margin-bottom: 20px;">
+                <p:outputLabel for="username" value="Username:*"/>
+                <p:inputText id="username"
+                             value="#{registrationBean.user.username}"
+                             required="true"
+                             style="width: 100%;"/>
+
+                <p:outputLabel for="password" value="Password:*"/>
+                <p:password id="password"
+                            value="#{registrationBean.user.password}"
+                            required="true"
+                            feedback="true"
+                            style="width: 100%;"/>
+
+                <p:outputLabel for="confirmPassword" value="Confirm Password:*"/>
+                <p:password id="confirmPassword"
+                            value="#{registrationBean.confirmPassword}"
+                            required="true"
+                            feedback="false"
+                            style="width: 100%;"/>
+
+                <p:outputLabel for="firstName" value="First Name:*"/>
+                <p:inputText id="firstName"
+                             value="#{registrationBean.user.firstName}"
+                             required="true"
+                             style="width: 100%;"/>
+
+                <p:outputLabel for="lastName" value="Last Name:*"/>
+                <p:inputText id="lastName"
+                             value="#{registrationBean.user.lastName}"
+                             required="true"
+                             style="width: 100%;"/>
+
+                <p:outputLabel for="email" value="Email:*"/>
+                <p:inputText id="email"
+                             value="#{registrationBean.user.email}"
+                             required="true"
+                             style="width: 100%;"/>
+            </p:panelGrid>
+
+            <p:commandButton value="Register"
+                             action="#{registrationBean.register}"
+                             update="messages"
+                             icon="pi pi-user-plus"
+                             style="width: 100%; margin-bottom: 10px;"
+                             styleClass="ui-button-success"/>
+
+            <p:commandButton value="Back to Login"
+                             onclick="window.location.href='login.xhtml'; return false;"
+                             icon="pi pi-arrow-left"
+                             style="width: 100%;"
+                             styleClass="ui-button-secondary"
+                             type="button"/>
+        </h:form>
+    </div>
+</h:body>
+</html>
