@@ -67,6 +67,8 @@
 </h:head>
 
 <h:body>
+
+    <!-- Header -->
     <div class="page-header">
         <h1>Product Management</h1>
         <div class="nav-menu">
@@ -79,6 +81,8 @@
     </div>
 
     <div class="content-wrapper">
+
+        <!-- Main Product Form -->
         <h:form id="productForm">
             <p:growl id="messages" showDetail="true" life="3000" />
 
@@ -87,11 +91,13 @@
                     <p:toolbarGroup>
                         <p:commandButton value="New Product" icon="pi pi-plus"
                                          actionListener="#{productBean.openNew}"
-                                         update=":dialogForm" oncomplete="PF('dlg').show()"
+                                         update=":dialogForm"
+                                         oncomplete="PF('dlg').show()"
                                          styleClass="ui-button-success" />
                         <p:commandButton value="Refresh" icon="pi pi-refresh"
                                          actionListener="#{productBean.loadProducts}"
-                                         update="productTable messages" styleClass="ui-button-info" />
+                                         update="productTable messages"
+                                         styleClass="ui-button-info" />
                     </p:toolbarGroup>
                     <p:toolbarGroup align="right">
                         <h:outputText value="Total: #{productBean.products.size()} products" style="font-weight: bold;" />
@@ -99,15 +105,16 @@
                 </p:toolbar>
             </div>
 
+            <!-- Products Table -->
             <div class="card">
                 <p:dataTable id="productTable" var="prod" value="#{productBean.products}"
                              paginator="true" rows="10" rowKey="#{prod.id}"
                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
-                             rowsPerPageTemplate="5,10,15,20" emptyMessage="No products found">
+                             rowsPerPageTemplate="5,10,15,20"
+                             emptyMessage="No products found">
 
                     <p:column headerText="Photo" style="width: 100px; text-align: center;">
                         <h:panelGroup rendered="#{not empty prod.photo}">
-                            <!-- FIXED: Using simple img tag with base64 - clickable -->
                             <img src="#{productBean.getProductImageAsBase64(prod)}"
                                  alt="#{prod.name}"
                                  style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; cursor: pointer;"
@@ -148,10 +155,14 @@
                     <p:column headerText="Actions" style="width: 120px; text-align: center;">
                         <p:commandButton icon="pi pi-pencil" title="Edit"
                                          actionListener="#{productBean.editProduct(prod)}"
-                                         update=":dialogForm" oncomplete="PF('dlg').show()" process="@this"
-                                         styleClass="ui-button-success ui-button-rounded ui-button-sm" style="margin-right: 5px;" />
+                                         update=":dialogForm"
+                                         oncomplete="PF('dlg').show()"
+                                         process="@this"
+                                         styleClass="ui-button-success ui-button-rounded ui-button-sm"
+                                         style="margin-right: 5px;" />
                         <p:commandButton icon="pi pi-trash" title="Delete"
-                                         actionListener="#{productBean.deleteProduct(prod)}" process="@this"
+                                         actionListener="#{productBean.deleteProduct(prod)}"
+                                         process="@this"
                                          update=":productForm:productTable :productForm:messages"
                                          styleClass="ui-button-danger ui-button-rounded ui-button-sm">
                             <p:confirm message="Delete #{prod.name}?" icon="pi pi-exclamation-triangle" />
@@ -159,7 +170,10 @@
                     </p:column>
                 </p:dataTable>
             </div>
+        </h:form>
 
+        <!-- ✅ Global Confirm Dialog (must be outside main forms) -->
+        <h:form id="confirmForm">
             <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
                 <p:commandButton value="Yes" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
                 <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no" icon="pi pi-times" />
@@ -190,31 +204,34 @@
                 </f:facet>
             </p:dialog>
         </h:form>
-        <!-- end of Photo Viewer Dialog -->
+
+        <!-- Dialog Form -->
         <h:form id="dialogForm" enctype="multipart/form-data">
             <p:dialog id="productDialog" header="Product Details" widgetVar="dlg" modal="true"
                       width="700" height="600" responsive="true" fitViewport="true">
+
                 <h:panelGroup rendered="#{productBean.product != null}">
                     <p:messages id="dialogMessages" showDetail="true" closable="true" />
 
                     <div style="max-height: 450px; overflow-y: auto; padding: 10px;">
                         <h:panelGrid columns="2" cellpadding="10" style="width: 100%;" columnClasses="label-col,input-col">
-                            <p:outputLabel value="Code:" style="font-weight: bold;" for="code"/>
+
+                            <p:outputLabel value="Code:" for="code"/>
                             <p:inputText id="code" value="#{productBean.product.code}" required="true" style="width: 100%;" />
 
-                            <p:outputLabel value="Name:" style="font-weight: bold;" for="name"/>
+                            <p:outputLabel value="Name:" for="name"/>
                             <p:inputText id="name" value="#{productBean.product.name}" required="true" style="width: 100%;" />
 
-                            <p:outputLabel value="Category:" style="font-weight: bold;" for="category"/>
+                            <p:outputLabel value="Category:" for="category"/>
                             <p:inputText id="category" value="#{productBean.product.category}" style="width: 100%;" />
 
-                            <p:outputLabel value="Price:" style="font-weight: bold;" for="price"/>
+                            <p:outputLabel value="Price:" for="price"/>
                             <p:inputNumber id="price" value="#{productBean.product.price}" symbol="$ " decimalPlaces="2" style="width: 100%;" />
 
-                            <p:outputLabel value="Quantity:" style="font-weight: bold;" for="quantity"/>
+                            <p:outputLabel value="Quantity:" for="quantity"/>
                             <p:inputNumber id="quantity" value="#{productBean.product.quantity}" decimalPlaces="0" style="width: 100%;" />
 
-                            <p:outputLabel value="Status:" style="font-weight: bold;" for="status"/>
+                            <p:outputLabel value="Status:" for="status"/>
                             <p:selectOneMenu id="status" value="#{productBean.product.status}" style="width: 100%;">
                                 <f:selectItem itemLabel="Select Status" itemValue="" />
                                 <f:selectItem itemLabel="In Stock" itemValue="INSTOCK" />
@@ -222,16 +239,15 @@
                                 <f:selectItem itemLabel="Out of Stock" itemValue="OUTOFSTOCK" />
                             </p:selectOneMenu>
 
-                            <p:outputLabel value="Available:" style="font-weight: bold;" for="available"/>
+                            <p:outputLabel value="Available:" for="available"/>
                             <p:selectBooleanCheckbox id="available" value="#{productBean.product.available}" />
 
-                            <p:outputLabel value="Photo:" style="font-weight: bold; vertical-align: top;" />
-                            <h:panelGroup style="display: block;">
-                                <!-- Show current photo if exists -->
+                            <p:outputLabel value="Photo:" style="vertical-align: top;" />
+                            <h:panelGroup>
                                 <h:panelGroup rendered="#{productBean.hasPhoto()}" style="display: block; margin-bottom: 10px;">
                                     <img src="#{productBean.getProductImageAsBase64(productBean.product)}"
                                          alt="Product Photo"
-                                         style="width: 200px; height: 200px; object-fit: cover; border-radius: 8px; border: 2px solid #ddd; display: block; margin-bottom: 10px;" />
+                                         style="width: 200px; height: 200px; object-fit: cover; border-radius: 8px; border: 2px solid #ddd; margin-bottom: 10px;" />
                                     <p:commandButton value="Remove Photo" icon="pi pi-times"
                                                      styleClass="ui-button-danger ui-button-sm"
                                                      actionListener="#{productBean.removePhoto}"
@@ -239,10 +255,8 @@
                                                      process="@this" />
                                 </h:panelGroup>
 
-                                <!-- Simple file input that stores temporarily -->
                                 <p:fileUpload id="photoUpload"
                                               mode="simple"
-                                              skinSimple="true"
                                               value="#{productBean.uploadedFile}"
                                               listener="#{productBean.handleFileUpload}"
                                               allowTypes="/(\.|\/)(jpe?g|png|gif|webp)$/i"
@@ -251,7 +265,6 @@
                                               invalidSizeMessage="Maximum file size is 5MB"
                                               invalidFileMessage="Only image files (JPG, PNG, GIF, WEBP) are allowed"
                                               style="width: 100%;" />
-                                <p:message for="photoUpload" />
                             </h:panelGroup>
                         </h:panelGrid>
                     </div>
@@ -271,5 +284,6 @@
             </p:dialog>
         </h:form>
     </div>
+
 </h:body>
 </html>

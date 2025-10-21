@@ -2,21 +2,17 @@ package com.manufacturing.service;
 
 import com.manufacturing.model.Sales;
 import com.manufacturing.repository.SalesRepository;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 public class SalesService {
 
-    private final SalesRepository salesRepository;
-
-    public SalesService(SalesRepository salesRepository) {
-        this.salesRepository = salesRepository;
-    }
+    @Autowired
+    private SalesRepository salesRepository;
 
     public List<Sales> findAll() {
         return salesRepository.findAll();
@@ -27,13 +23,26 @@ public class SalesService {
     }
 
     public Sales save(Sales sales) {
-        // Calculate total amount
-        if (sales.getQuantity() != null && sales.getUnitPrice() != null) {
-            sales.setTotalAmount(sales.getQuantity() * sales.getUnitPrice());
+        // Calculate total from all items
+        if (sales.getItems() != null && !sales.getItems().isEmpty()) {
+            // Ensure each item has calculated line total
+            sales.getItems().forEach(item -> {
+                if (item.getQuantity() != null && item.getUnitPrice() != null) {
+                    item.calculateLineTotal();
+                }
+            });
+
+            // Calculate grand total
+            sales.calculateTotal();
+        } else {
+            sales.setTotalAmount(0.0);
         }
+
         return salesRepository.save(sales);
     }
-
+    public List<Sales> findBySaleDateBetween(Date startDate, Date endDate) {
+        return salesRepository.findBySaleDateBetween(startDate, endDate);
+    }
     public void delete(String id) {
         salesRepository.deleteById(id);
     }

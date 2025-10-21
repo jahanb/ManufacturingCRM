@@ -265,20 +265,20 @@
                     </p:column>
 
                     <p:column headerText="Customer">
-                        <h:outputText value="#{sale.customerName}"/>
+                        <h:outputText value="#{sale.customer.name}"/>
                     </p:column>
 
                     <p:column headerText="Product">
-                        <h:outputText value="#{sale.product.name}" rendered="#{sale.product != null}"/>
-                        <h:outputText value="-" rendered="#{sale.product == null}"/>
+                        <h:outputText value="#{salesitem.product.name}" rendered="#{salesitem.product != null}"/>
+                        <h:outputText value="-" rendered="#{saleitem.product == null}"/>
                     </p:column>
 
                     <p:column headerText="Quantity" style="text-align: center;">
-                        <h:outputText value="#{sale.quantity}"/>
+                        <h:outputText value="#{salesitem.quantity}"/>
                     </p:column>
 
                     <p:column headerText="Unit Price" style="text-align: right;">
-                        <h:outputText value="#{sale.unitPrice}">
+                        <h:outputText value="#{salesitem.unitPrice}">
                             <f:convertNumber type="currency" currencySymbol="$"/>
                         </h:outputText>
                     </p:column>

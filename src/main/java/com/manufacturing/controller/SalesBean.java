@@ -1,9 +1,6 @@
 package com.manufacturing.controller;
 
-import com.manufacturing.model.Customer;
-import com.manufacturing.model.Product;
-import com.manufacturing.model.Sales;
-import com.manufacturing.model.Salesperson;
+import com.manufacturing.model.*;
 import com.manufacturing.service.CustomerService;
 import com.manufacturing.service.ProductService;
 import com.manufacturing.service.SalesService;
@@ -17,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -45,6 +43,10 @@ public class SalesBean implements Serializable {
     private List<Salesperson> activeSalespersons;
     private List<Customer> activeCustomers;
 
+    // For adding items to sale
+    private SalesItem currentItem;
+    private List<SalesItem> tempItems;
+
     // For adding new customer on the fly
     private Customer newCustomer;
 
@@ -53,6 +55,8 @@ public class SalesBean implements Serializable {
         loadSales();
         loadDropdowns();
         sales = new Sales();
+        tempItems = new ArrayList<>();
+        currentItem = new SalesItem();
         resetNewCustomer();
     }
 
@@ -70,6 +74,8 @@ public class SalesBean implements Serializable {
         sales = new Sales();
         sales.setSaleDate(LocalDateTime.now());
         sales.setStatus("PENDING");
+        tempItems = new ArrayList<>();
+        currentItem = new SalesItem();
         resetNewCustomer();
     }
 
@@ -94,8 +100,8 @@ public class SalesBean implements Serializable {
             }
 
             Customer savedCustomer = customerService.save(newCustomer);
-            loadDropdowns(); // Reload customers list
-            sales.setCustomer(savedCustomer); // Set the newly created customer
+            loadDropdowns();
+            sales.setCustomer(savedCustomer);
 
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_INFO, "Success",
@@ -109,42 +115,116 @@ public class SalesBean implements Serializable {
         }
     }
 
+    // Item Management
     public void onProductChange() {
-        if (sales.getProduct() != null) {
-            sales.setUnitPrice(sales.getProduct().getPrice());
-            calculateTotal();
+        if (currentItem.getProduct() != null) {
+            currentItem.setUnitPrice(currentItem.getProduct().getPrice());
+            currentItem.calculateLineTotal();
         }
     }
 
     public void onQuantityChange() {
-        calculateTotal();
+        currentItem.calculateLineTotal();
     }
 
-    public void calculateTotal() {
-        if (sales.getQuantity() != null && sales.getUnitPrice() != null) {
-            sales.setTotalAmount(sales.getQuantity() * sales.getUnitPrice());
+    public void onUnitPriceChange() {
+        currentItem.calculateLineTotal();
+    }
+
+    public void addItem() {
+        if (currentItem.getProduct() == null) {
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_WARN, "Warning",
+                            "Please select a product"));
+            return;
         }
+
+        if (currentItem.getQuantity() == null || currentItem.getQuantity() <= 0) {
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_WARN, "Warning",
+                            "Please enter quantity"));
+            return;
+        }
+
+        if (currentItem.getUnitPrice() == null || currentItem.getUnitPrice() <= 0) {
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_WARN, "Warning",
+                            "Please enter unit price"));
+            return;
+        }
+
+        // Calculate line total before adding
+        currentItem.calculateLineTotal();
+
+        // Create a copy of the current item to add to the list
+        SalesItem itemToAdd = new SalesItem();
+        itemToAdd.setProduct(currentItem.getProduct());
+        itemToAdd.setQuantity(currentItem.getQuantity());
+        itemToAdd.setUnitPrice(currentItem.getUnitPrice());
+        itemToAdd.setLineTotal(currentItem.getLineTotal());
+
+        tempItems.add(itemToAdd);
+
+        FacesContext.getCurrentInstance().addMessage(null,
+                new FacesMessage(FacesMessage.SEVERITY_INFO, "Success",
+                        "Item added to sale"));
+
+        // Reset for next item
+        currentItem = new SalesItem();
+    }
+
+    public void removeItem(SalesItem item) {
+        tempItems.remove(item);
+        FacesContext.getCurrentInstance().addMessage(null,
+                new FacesMessage(FacesMessage.SEVERITY_INFO, "Success",
+                        "Item removed"));
+    }
+
+    public Double calculateGrandTotal() {
+        if (tempItems == null || tempItems.isEmpty()) {
+            return 0.0;
+        }
+        return tempItems.stream()
+                .mapToDouble(item -> item.getLineTotal() != null ? item.getLineTotal() : 0.0)
+                .sum();
     }
 
     public void saveSales() {
         try {
-            if (sales.getSalesperson() == null || sales.getProduct() == null || sales.getCustomer() == null) {
+            if (sales.getSalesperson() == null || sales.getCustomer() == null) {
                 FacesContext.getCurrentInstance().addMessage(null,
                         new FacesMessage(FacesMessage.SEVERITY_WARN, "Warning",
-                                "Please select salesperson, product, and customer"));
+                                "Please select salesperson and customer"));
                 return;
             }
 
+            if (tempItems == null || tempItems.isEmpty()) {
+                FacesContext.getCurrentInstance().addMessage(null,
+                        new FacesMessage(FacesMessage.SEVERITY_WARN, "Warning",
+                                "Please add at least one item to the sale"));
+                return;
+            }
+
+            // Set items and calculate total
+            sales.setItems(new ArrayList<>(tempItems));
+            sales.calculateTotal();
+
             salesService.save(sales);
             loadSales();
+
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_INFO, "Success",
-                            "Sales saved successfully"));
+                            "Sales saved successfully with " + tempItems.size() + " items"));
+
+            // Reset everything
             sales = new Sales();
+            tempItems = new ArrayList<>();
+            currentItem = new SalesItem();
         } catch (Exception e) {
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error",
                             "Failed to save sales: " + e.getMessage()));
+            e.printStackTrace();
         }
     }
 
@@ -159,7 +239,15 @@ public class SalesBean implements Serializable {
         } catch (Exception e) {
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error",
-                            "Failed to delete sales"));
+                            "Failed to delete sales: " + e.getMessage()));
+        }
+    }
+
+    public void editSales() {
+        if (selectedSales != null) {
+            sales = selectedSales;
+            tempItems = new ArrayList<>(sales.getItems() != null ? sales.getItems() : new ArrayList<>());
+            currentItem = new SalesItem();
         }
     }
 
@@ -218,5 +306,21 @@ public class SalesBean implements Serializable {
 
     public void setNewCustomer(Customer newCustomer) {
         this.newCustomer = newCustomer;
+    }
+
+    public SalesItem getCurrentItem() {
+        return currentItem;
+    }
+
+    public void setCurrentItem(SalesItem currentItem) {
+        this.currentItem = currentItem;
+    }
+
+    public List<SalesItem> getTempItems() {
+        return tempItems;
+    }
+
+    public void setTempItems(List<SalesItem> tempItems) {
+        this.tempItems = tempItems;
     }
 }

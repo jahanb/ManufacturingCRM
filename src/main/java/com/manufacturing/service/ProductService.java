@@ -2,14 +2,12 @@ package com.manufacturing.service;
 
 import com.manufacturing.model.Product;
 import com.manufacturing.repository.ProductRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 public class ProductService {
 
     private final ProductRepository productRepository;
@@ -29,8 +27,17 @@ public class ProductService {
     public Product save(Product product) {
         return productRepository.save(product);
     }
+    public byte[] getImageBytes(String id) {
+        return productRepository.findById(id)
+                .map(Product::getPhoto)
+                .orElseThrow(() -> new RuntimeException("No photo found for product " + id));
+    }
 
-    public void delete(String id) {
+    public void delete(Product product) {
+        productRepository.delete(product);
+    }
+
+    public void deleteById(String id) {
         productRepository.deleteById(id);
     }
 

@@ -1,26 +1,61 @@
 package com.manufacturing.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
+import jakarta.persistence.*;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+import java.io.Serializable;
+
+@Entity
 @Document(collection = "products")
-public class Product {
+public class Product implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     @Id
+    @Column(name = "id")
     private String id;
+
+    @Column(name = "code")
     private String code;
+
+    @Column(name = "name")
     private String name;
+
+    @Column(name = "category")
     private String category;
+
+    @Column(name = "quantity")
     private Integer quantity;
+
+    @Column(name = "price")
     private Double price;
+
+    @Column(name = "status")
     private String status;
+
+    @Column(name = "available")
     private boolean available;
 
+    // Photo fields
+    @Lob
+    @Column(name = "photo", columnDefinition = "LONGBLOB")
+    private byte[] photo;
+
+    @Column(name = "photo_content_type", length = 100)
+    private String photoContentType;
+
+    @Column(name = "photo_filename", length = 255)
+    private String photoFilename;
+
+    // Constructors
+    public Product() {
+    }
+
+    public Product(String id) {
+        this.id = id;
+    }
+
+    // Getters and Setters
     public String getId() {
         return id;
     }
@@ -85,8 +120,55 @@ public class Product {
         this.available = available;
     }
 
+    public byte[] getPhoto() {
+        return photo;
+    }
+
+    public void setPhoto(byte[] photo) {
+        this.photo = photo;
+    }
+
+    public String getPhotoContentType() {
+        return photoContentType;
+    }
+
+    public void setPhotoContentType(String photoContentType) {
+        this.photoContentType = photoContentType;
+    }
+
+    public String getPhotoFilename() {
+        return photoFilename;
+    }
+
+    public void setPhotoFilename(String photoFilename) {
+        this.photoFilename = photoFilename;
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Product product = (Product) obj;
+        return id != null ? id.equals(product.id) : product.id == null;
+    }
+
     @Override
     public String toString() {
-        return name + " (" + code + ")";
+        return "Product{" +
+                "id='" + id + '\'' +
+                ", code='" + code + '\'' +
+                ", name='" + name + '\'' +
+                ", category='" + category + '\'' +
+                ", quantity=" + quantity +
+                ", price=" + price +
+                ", status='" + status + '\'' +
+                ", available=" + available +
+                ", hasPhoto=" + (photo != null) +
+                '}';
     }
 }

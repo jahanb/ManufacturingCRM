@@ -5,6 +5,47 @@
       xmlns:p="http://primefaces.org/ui">
 <h:head>
     <title>Sales Management</title>
+    <style>
+        .items-table {
+            margin: 20px 0;
+        }
+        .grand-total-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 15px 0;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .add-item-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .form-field {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-field label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .add-item-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+            gap: 10px;
+            align-items: end;
+        }
+    </style>
 </h:head>
 <h:body>
     <h:form>
@@ -22,16 +63,17 @@
                 <p:commandButton value="Logout"
                                  action="#{authBean.logout}"
                                  icon="pi pi-sign-out"
-                                 styleClass="ui-button-danger"/>
+                                 styleClass="ui-button-danger"
+                                 ajax="false"/>
             </f:facet>
         </p:menubar>
     </h:form>
 
     <div style="margin: 20px;">
-        <h2>Sales Management</h2>
+        <h2>💰 Sales Management (Multi-Item Transactions)</h2>
 
         <h:form id="form">
-            <p:growl id="messages" showDetail="true"/>
+            <p:messages id="messages" showDetail="true" closable="true"/>
 
             <p:toolbar style="margin-top: 20px;">
                 <p:toolbarGroup>
@@ -42,6 +84,7 @@
                 </p:toolbarGroup>
             </p:toolbar>
 
+            <!-- Sales List DataTable -->
             <p:dataTable id="dt" var="sale" value="#{salesBean.salesList}"
                          selectionMode="single" selection="#{salesBean.selectedSales}"
                          rowKey="#{sale.id}" paginator="true" rows="10"
@@ -65,23 +108,12 @@
                     <h:outputText value="-" rendered="#{sale.customer == null}"/>
                 </p:column>
 
-                <p:column headerText="Product" sortBy="#{sale.product.name}">
-                    <h:outputText value="#{sale.product.name}" rendered="#{sale.product != null}"/>
-                    <h:outputText value="-" rendered="#{sale.product == null}"/>
-                </p:column>
-
-                <p:column headerText="Quantity" sortBy="#{sale.quantity}">
-                    <h:outputText value="#{sale.quantity}"/>
-                </p:column>
-
-                <p:column headerText="Unit Price" sortBy="#{sale.unitPrice}">
-                    <h:outputText value="#{sale.unitPrice}">
-                        <f:convertNumber type="currency" currencySymbol="$"/>
-                    </h:outputText>
+                <p:column headerText="Items" style="text-align: center;">
+                    <h:outputText value="#{sale.items.size()}" style="font-weight: bold; color: #667eea;"/>
                 </p:column>
 
                 <p:column headerText="Total Amount" sortBy="#{sale.totalAmount}">
-                    <h:outputText value="#{sale.totalAmount}">
+                    <h:outputText value="#{sale.totalAmount}" style="font-weight: bold;">
                         <f:convertNumber type="currency" currencySymbol="$"/>
                     </h:outputText>
                 </p:column>
@@ -92,13 +124,14 @@
                 </p:column>
 
                 <p:column headerText="Actions" style="width: 120px;">
-                    <p:commandButton icon="pi pi-pencil"
-                                     update=":form:salesDialog"
-                                     oncomplete="PF('salesDialog').show()"
-                                     styleClass="ui-button-warning"
-                                     style="margin-right: 5px;">
+                    <p:commandButton icon="pi pi-eye"
+                                     update=":form:viewDialog"
+                                     oncomplete="PF('viewDialog').show()"
+                                     styleClass="ui-button-info"
+                                     style="margin-right: 5px;"
+                                     title="View Details">
                         <f:setPropertyActionListener value="#{sale}"
-                                                     target="#{salesBean.sales}"/>
+                                                     target="#{salesBean.selectedSales}"/>
                     </p:commandButton>
 
                     <p:commandButton icon="pi pi-trash"
@@ -114,96 +147,192 @@
             </p:dataTable>
 
             <!-- Main Sales Dialog -->
-            <p:dialog header="Sales Details" widgetVar="salesDialog" modal="true"
-                      showEffect="fade" hideEffect="fade" id="salesDialog" width="700">
+            <p:dialog header="📝 New Sale Transaction" widgetVar="salesDialog" modal="true"
+                      showEffect="fade" hideEffect="fade" id="salesDialog" width="950" maximizable="true">
                 <p:outputPanel>
-                    <p:panelGrid columns="2" style="margin-top: 20px;">
-                        <p:outputLabel for="salesperson" value="Salesperson:"/>
-                        <p:selectOneMenu id="salesperson" value="#{salesBean.sales.salesperson}"
-                                         converter="omnifaces.SelectItemsConverter" required="true"
-                                         style="width: 100%;">
-                            <f:selectItem itemLabel="Select Salesperson" itemValue="#{null}"/>
-                            <f:selectItems value="#{salesBean.activeSalespersons}"
-                                           var="sp"
-                                           itemLabel="#{sp.firstName} #{sp.lastName}"
-                                           itemValue="#{sp}"/>
-                        </p:selectOneMenu>
-
-                        <p:outputLabel for="customer" value="Customer:"/>
-                        <h:panelGroup style="display: flex; gap: 10px; width: 100%;">
-                            <p:selectOneMenu id="customer" value="#{salesBean.sales.customer}"
+                    <!-- Header Information -->
+                    <h3 style="margin-top: 0; color: #667eea;">Sale Information</h3>
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <p:outputLabel for="salesperson" value="Salesperson:*"/>
+                            <p:selectOneMenu id="salesperson" value="#{salesBean.sales.salesperson}"
                                              converter="omnifaces.SelectItemsConverter" required="true"
-                                             style="flex: 1;">
-                                <f:selectItem itemLabel="Select Customer" itemValue="#{null}"/>
-                                <f:selectItems value="#{salesBean.activeCustomers}"
-                                               var="cust"
-                                               itemLabel="#{cust.name}#{cust.companyName != null and cust.companyName != '' ? ' ('.concat(cust.companyName).concat(')') : ''}"
-                                               itemValue="#{cust}"/>
+                                             style="width: 100%;">
+                                <f:selectItem itemLabel="Select Salesperson" itemValue="#{null}"/>
+                                <f:selectItems value="#{salesBean.activeSalespersons}"
+                                               var="sp"
+                                               itemLabel="#{sp.firstName} #{sp.lastName}"
+                                               itemValue="#{sp}"/>
                             </p:selectOneMenu>
-                            <p:commandButton value="+"
-                                             icon="pi pi-plus"
-                                             onclick="PF('newCustomerDialog').show();"
-                                             type="button"
-                                             styleClass="ui-button-success"
-                                             title="Add New Customer"/>
-                        </h:panelGroup>
+                        </div>
 
-                        <p:outputLabel for="product" value="Product:"/>
-                        <p:selectOneMenu id="product" value="#{salesBean.sales.product}"
-                                         converter="omnifaces.SelectItemsConverter" required="true"
-                                         style="width: 100%;">
-                            <f:selectItem itemLabel="Select Product" itemValue="#{null}"/>
-                            <f:selectItems value="#{salesBean.availableProducts}"
-                                           var="prod"
-                                           itemLabel="#{prod.name} (#{prod.code})"
-                                           itemValue="#{prod}"/>
-                            <p:ajax listener="#{salesBean.onProductChange}"
-                                    update="unitPrice totalAmount"/>
-                        </p:selectOneMenu>
+                        <div class="form-field">
+                            <p:outputLabel for="customer" value="Customer:*"/>
+                            <div style="display: flex; gap: 10px;">
+                                <p:selectOneMenu id="customer" value="#{salesBean.sales.customer}"
+                                                 converter="omnifaces.SelectItemsConverter" required="true"
+                                                 style="flex: 1;">
+                                    <f:selectItem itemLabel="Select Customer" itemValue="#{null}"/>
+                                    <f:selectItems value="#{salesBean.activeCustomers}"
+                                                   var="cust"
+                                                   itemLabel="#{cust.name}#{cust.companyName != null and cust.companyName != '' ? ' ('.concat(cust.companyName).concat(')') : ''}"
+                                                   itemValue="#{cust}"/>
+                                </p:selectOneMenu>
+                                <p:commandButton value="+"
+                                                 icon="pi pi-plus"
+                                                 actionListener="#{salesBean.openNewCustomerDialog}"
+                                                 update=":customerForm:newCustomerDialog"
+                                                 onclick="PF('newCustomerDialog').show();"
+                                                 type="button"
+                                                 styleClass="ui-button-success"
+                                                 title="Add New Customer"/>
+                            </div>
+                        </div>
 
-                        <p:outputLabel for="quantity" value="Quantity:"/>
-                        <p:inputNumber id="quantity" value="#{salesBean.sales.quantity}"
-                                       decimalPlaces="0" required="true" style="width: 100%;">
-                            <p:ajax listener="#{salesBean.onQuantityChange}"
-                                    update="totalAmount"/>
-                        </p:inputNumber>
+                        <div class="form-field">
+                            <p:outputLabel for="saleDate" value="Sale Date:*"/>
+                            <p:calendar id="saleDate" value="#{salesBean.sales.saleDate}"
+                                        pattern="yyyy-MM-dd HH:mm" showTime="true"
+                                        showButtonPanel="true" style="width: 100%;">
+                                <f:convertDateTime pattern="yyyy-MM-dd HH:mm" type="localDateTime"/>
+                            </p:calendar>
+                        </div>
 
-                        <p:outputLabel for="unitPrice" value="Unit Price:"/>
-                        <p:inputNumber id="unitPrice" value="#{salesBean.sales.unitPrice}"
-                                       symbol="$ " decimalPlaces="2" required="true" style="width: 100%;">
-                            <p:ajax listener="#{salesBean.calculateTotal}"
-                                    update="totalAmount"/>
-                        </p:inputNumber>
+                        <div class="form-field">
+                            <p:outputLabel for="status" value="Status:*"/>
+                            <p:selectOneMenu id="status" value="#{salesBean.sales.status}" required="true" style="width: 100%;">
+                                <f:selectItem itemLabel="PENDING" itemValue="PENDING"/>
+                                <f:selectItem itemLabel="COMPLETED" itemValue="COMPLETED"/>
+                                <f:selectItem itemLabel="CANCELLED" itemValue="CANCELLED"/>
+                            </p:selectOneMenu>
+                        </div>
+                    </div>
 
-                        <p:outputLabel for="totalAmount" value="Total Amount:"/>
-                        <p:inputNumber id="totalAmount" value="#{salesBean.sales.totalAmount}"
-                                       symbol="$ " decimalPlaces="2" disabled="true" style="width: 100%;"/>
+                    <p:separator/>
 
-                        <p:outputLabel for="status" value="Status:"/>
-                        <p:selectOneMenu id="status" value="#{salesBean.sales.status}" required="true" style="width: 100%;">
-                            <f:selectItem itemLabel="PENDING" itemValue="PENDING"/>
-                            <f:selectItem itemLabel="COMPLETED" itemValue="COMPLETED"/>
-                            <f:selectItem itemLabel="CANCELLED" itemValue="CANCELLED"/>
-                        </p:selectOneMenu>
+                    <!-- Add Items Section -->
+                    <div class="add-item-section">
+                        <h3 style="margin-top: 0; color: #667eea;">➕ Add Product to Sale</h3>
+                        <div class="add-item-grid">
+                            <div class="form-field">
+                                <p:outputLabel for="itemProduct" value="Product:*"/>
+                                <p:selectOneMenu id="itemProduct" value="#{salesBean.currentItem.product}"
+                                                 converter="omnifaces.SelectItemsConverter"
+                                                 style="width: 100%;">
+                                    <f:selectItem itemLabel="Select Product" itemValue="#{null}"/>
+                                    <f:selectItems value="#{salesBean.availableProducts}"
+                                                   var="prod"
+                                                   itemLabel="#{prod.name} (#{prod.code})"
+                                                   itemValue="#{prod}"/>
+                                    <p:ajax listener="#{salesBean.onProductChange}"
+                                            update="itemUnitPrice itemLineTotal"/>
+                                </p:selectOneMenu>
+                            </div>
 
-                        <p:outputLabel for="saleDate" value="Sale Date:"/>
-                        <p:calendar id="saleDate" value="#{salesBean.sales.saleDate}"
-                                    pattern="yyyy-MM-dd HH:mm" showTime="true"
-                                    showButtonPanel="true" style="width: 100%;">
-                            <f:convertDateTime pattern="yyyy-MM-dd HH:mm" type="localDateTime"/>
-                        </p:calendar>
+                            <div class="form-field">
+                                <p:outputLabel for="itemQuantity" value="Quantity:*"/>
+                                <p:inputNumber id="itemQuantity" value="#{salesBean.currentItem.quantity}"
+                                               decimalPlaces="0" style="width: 100%;">
+                                    <p:ajax listener="#{salesBean.onQuantityChange}"
+                                            update="itemLineTotal"/>
+                                </p:inputNumber>
+                            </div>
 
-                        <p:outputLabel for="notes" value="Notes:"/>
+                            <div class="form-field">
+                                <p:outputLabel for="itemUnitPrice" value="Unit Price:*"/>
+                                <p:inputNumber id="itemUnitPrice" value="#{salesBean.currentItem.unitPrice}"
+                                               symbol="$ " decimalPlaces="2" style="width: 100%;">
+                                    <p:ajax listener="#{salesBean.onUnitPriceChange}"
+                                            update="itemLineTotal"/>
+                                </p:inputNumber>
+                            </div>
+
+                            <div class="form-field">
+                                <p:outputLabel for="itemLineTotal" value="Line Total:"/>
+                                <p:inputNumber id="itemLineTotal" value="#{salesBean.currentItem.lineTotal}"
+                                               symbol="$ " decimalPlaces="2" disabled="true" style="width: 100%;"/>
+                            </div>
+
+                            <div>
+                                <p:commandButton value="Add Item"
+                                                 icon="pi pi-plus"
+                                                 actionListener="#{salesBean.addItem}"
+                                                 update="@form:itemsTable @form:grandTotal @form:itemProduct @form:itemQuantity @form:itemUnitPrice @form:itemLineTotal :form:messages"
+                                                 process="@this @form:itemProduct @form:itemQuantity @form:itemUnitPrice"
+                                                 styleClass="ui-button-success"
+                                                 style="width: 100%; margin-top: 22px;"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Items Table -->
+                    <h3 style="color: #667eea;">🛒 Sale Items</h3>
+                    <p:dataTable id="itemsTable" var="item" value="#{salesBean.tempItems}"
+                                 emptyMessage="No items added yet. Add products above."
+                                 class="items-table"
+                                 styleClass="ui-datatable-striped">
+
+                        <p:column headerText="Product" style="width: 30%;">
+                            <h:outputText value="#{item.product.name}" rendered="#{item.product != null}" style="font-weight: bold;"/>
+                        </p:column>
+
+                        <p:column headerText="Code" style="width: 15%;">
+                            <h:outputText value="#{item.product.code}" rendered="#{item.product != null}"/>
+                        </p:column>
+
+                        <p:column headerText="Quantity" style="text-align: center; width: 10%;">
+                            <h:outputText value="#{item.quantity}"/>
+                        </p:column>
+
+                        <p:column headerText="Unit Price" style="text-align: right; width: 15%;">
+                            <h:outputText value="#{item.unitPrice}">
+                                <f:convertNumber type="currency" currencySymbol="$"/>
+                            </h:outputText>
+                        </p:column>
+
+                        <p:column headerText="Line Total" style="text-align: right; width: 20%;">
+                            <h:outputText value="#{item.lineTotal}" style="font-weight: bold; color: #667eea;">
+                                <f:convertNumber type="currency" currencySymbol="$"/>
+                            </h:outputText>
+                        </p:column>
+
+                        <p:column headerText="Action" style="width: 10%; text-align: center;">
+                            <p:commandButton icon="pi pi-trash"
+                                             styleClass="ui-button-danger"
+                                             actionListener="#{salesBean.removeItem(item)}"
+                                             update="@form:itemsTable @form:grandTotal :form:messages"
+                                             process="@this"
+                                             title="Remove Item">
+                                <p:confirm header="Confirmation" message="Remove this item?"
+                                           icon="pi pi-exclamation-triangle"/>
+                            </p:commandButton>
+                        </p:column>
+                    </p:dataTable>
+
+                    <!-- Grand Total -->
+                    <p:outputPanel id="grandTotal">
+                        <div class="grand-total-box">
+                            💰 Grand Total:
+                            <h:outputText value="#{salesBean.calculateGrandTotal()}">
+                                <f:convertNumber type="currency" currencySymbol="$" minFractionDigits="2" maxFractionDigits="2"/>
+                            </h:outputText>
+                        </div>
+                    </p:outputPanel>
+                    <!-- Notes -->
+                    <div style="margin-top: 15px;">
+                        <p:outputLabel for="notes" value="Notes:" style="display: block; margin-bottom: 5px; font-weight: bold;"/>
                         <p:inputTextarea id="notes" value="#{salesBean.sales.notes}"
-                                         rows="3" style="width: 100%;"/>
-                    </p:panelGrid>
+                                         rows="3" style="width: 100%;"
+                                         placeholder="Add any additional notes about this sale..."/>
+                    </div>
                 </p:outputPanel>
 
                 <f:facet name="footer">
-                    <p:commandButton value="Save" icon="pi pi-check"
+                    <p:commandButton value="💾 Save Sale" icon="pi pi-check"
                                      actionListener="#{salesBean.saveSales}"
                                      update=":form:dt :form:messages"
-                                     oncomplete="if (args &amp;&amp; !args.validationFailed) PF('salesDialog').hide()"/>
+                                     oncomplete="if (args &amp;&amp; !args.validationFailed) PF('salesDialog').hide()"
+                                     styleClass="ui-button-success"/>
                     <p:commandButton value="Cancel" icon="pi pi-times"
                                      onclick="PF('salesDialog').hide()"
                                      styleClass="ui-button-secondary"
@@ -211,44 +340,83 @@
                 </f:facet>
             </p:dialog>
 
-            <!-- Add New Customer Dialog -->
-            <p:dialog header="Add New Customer" widgetVar="newCustomerDialog" modal="true"
-                      showEffect="fade" hideEffect="fade" id="newCustomerDialog" width="500">
-                <p:outputPanel>
-                    <p:panelGrid columns="2" style="margin-top: 20px;">
-                        <p:outputLabel for="custName" value="Name:"/>
-                        <p:inputText id="custName" value="#{salesBean.newCustomer.name}"
-                                     required="true" style="width: 100%;"/>
+            <!-- View Sale Details Dialog -->
+            <p:dialog header="📄 Sale Details" widgetVar="viewDialog" modal="true"
+                      showEffect="fade" hideEffect="fade" id="viewDialog" width="750">
+                <h:panelGroup rendered="#{salesBean.selectedSales != null}">
+                    <div class="form-grid">
+                        <div>
+                            <p:outputLabel value="Sale Date:" style="font-weight: bold; display: block; margin-bottom: 5px;"/>
+                            <h:outputText value="#{salesBean.selectedSales.saleDate}" style="font-size: 1.1em;">
+                                <f:convertDateTime pattern="yyyy-MM-dd HH:mm" type="localDateTime"/>
+                            </h:outputText>
+                        </div>
 
-                        <p:outputLabel for="custCompany" value="Company:"/>
-                        <p:inputText id="custCompany" value="#{salesBean.newCustomer.companyName}"
-                                     style="width: 100%;"/>
+                        <div>
+                            <p:outputLabel value="Status:" style="font-weight: bold; display: block; margin-bottom: 5px;"/>
+                            <p:tag value="#{salesBean.selectedSales.status}"
+                                   severity="#{salesBean.selectedSales.status eq 'COMPLETED' ? 'success' : (salesBean.selectedSales.status eq 'PENDING' ? 'warning' : 'danger')}"/>
+                        </div>
 
-                        <p:outputLabel for="custEmail" value="Email:"/>
-                        <p:inputText id="custEmail" value="#{salesBean.newCustomer.email}"
-                                     style="width: 100%;"/>
+                        <div>
+                            <p:outputLabel value="Salesperson:" style="font-weight: bold; display: block; margin-bottom: 5px;"/>
+                            <h:outputText value="#{salesBean.selectedSales.salesperson.firstName} #{salesBean.selectedSales.salesperson.lastName}"
+                                          style="font-size: 1.1em;"/>
+                        </div>
 
-                        <p:outputLabel for="custPhone" value="Phone:"/>
-                        <p:inputText id="custPhone" value="#{salesBean.newCustomer.phone}"
-                                     style="width: 100%;"/>
+                        <div>
+                            <p:outputLabel value="Customer:" style="font-weight: bold; display: block; margin-bottom: 5px;"/>
+                            <h:outputText value="#{salesBean.selectedSales.customer.name}"
+                                          style="font-size: 1.1em;"/>
+                        </div>
+                    </div>
 
-                        <p:outputLabel for="custType" value="Type:"/>
-                        <p:selectOneMenu id="custType" value="#{salesBean.newCustomer.customerType}"
-                                         style="width: 100%;">
-                            <f:selectItem itemLabel="REGULAR" itemValue="REGULAR"/>
-                            <f:selectItem itemLabel="VIP" itemValue="VIP"/>
-                            <f:selectItem itemLabel="WHOLESALE" itemValue="WHOLESALE"/>
-                        </p:selectOneMenu>
-                    </p:panelGrid>
-                </p:outputPanel>
+                    <h3 style="margin-top: 20px; color: #667eea;">Items Purchased</h3>
+                    <p:dataTable var="item" value="#{salesBean.selectedSales.items}"
+                                 styleClass="ui-datatable-striped">
+                        <p:column headerText="Product">
+                            <h:outputText value="#{item.product.name}" style="font-weight: bold;"/>
+                        </p:column>
+
+                        <p:column headerText="Code">
+                            <h:outputText value="#{item.product.code}"/>
+                        </p:column>
+
+                        <p:column headerText="Quantity" style="text-align: center;">
+                            <h:outputText value="#{item.quantity}"/>
+                        </p:column>
+
+                        <p:column headerText="Unit Price" style="text-align: right;">
+                            <h:outputText value="#{item.unitPrice}">
+                                <f:convertNumber type="currency" currencySymbol="$"/>
+                            </h:outputText>
+                        </p:column>
+
+                        <p:column headerText="Line Total" style="text-align: right;">
+                            <h:outputText value="#{item.lineTotal}" style="font-weight: bold;">
+                                <f:convertNumber type="currency" currencySymbol="$"/>
+                            </h:outputText>
+                        </p:column>
+                    </p:dataTable>
+
+                    <div class="grand-total-box">
+                        💰 Total Amount:
+                        <h:outputText value="#{salesBean.selectedSales.totalAmount}">
+                            <f:convertNumber type="currency" currencySymbol="$" minFractionDigits="2" maxFractionDigits="2"/>
+                        </h:outputText>
+                    </div>
+
+                    <h:panelGroup rendered="#{salesBean.selectedSales.notes != null and salesBean.selectedSales.notes != ''}">
+                        <h3 style="color: #667eea;">Notes</h3>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                            <p:outputLabel value="#{salesBean.selectedSales.notes}" style="white-space: pre-wrap;"/>
+                        </div>
+                    </h:panelGroup>
+                </h:panelGroup>
 
                 <f:facet name="footer">
-                    <p:commandButton value="Create &amp; Select" icon="pi pi-check"
-                                     actionListener="#{salesBean.saveNewCustomer}"
-                                     update=":form:salesDialog :form:messages"
-                                     oncomplete="if (args &amp;&amp; !args.validationFailed) PF('newCustomerDialog').hide()"/>
-                    <p:commandButton value="Cancel" icon="pi pi-times"
-                                     onclick="PF('newCustomerDialog').hide()"
+                    <p:commandButton value="Close" icon="pi pi-times"
+                                     onclick="PF('viewDialog').hide()"
                                      styleClass="ui-button-secondary"
                                      type="button"/>
                 </f:facet>
@@ -260,6 +428,62 @@
                 <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary"
                                  icon="pi pi-times"/>
             </p:confirmDialog>
+        </h:form>
+
+        <!-- Separate Form for New Customer Dialog -->
+        <h:form id="customerForm">
+            <p:dialog header="➕ Add New Customer" widgetVar="newCustomerDialog" modal="true"
+                      showEffect="fade" hideEffect="fade" id="newCustomerDialog" width="500">
+                <p:outputPanel>
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <p:outputLabel for="custName" value="Name:*"/>
+                            <p:inputText id="custName" value="#{salesBean.newCustomer.name}"
+                                         required="true" style="width: 100%;"/>
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel for="custCompany" value="Company:"/>
+                            <p:inputText id="custCompany" value="#{salesBean.newCustomer.companyName}"
+                                         style="width: 100%;"/>
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel for="custEmail" value="Email:"/>
+                            <p:inputText id="custEmail" value="#{salesBean.newCustomer.email}"
+                                         style="width: 100%;"/>
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel for="custPhone" value="Phone:"/>
+                            <p:inputText id="custPhone" value="#{salesBean.newCustomer.phone}"
+                                         style="width: 100%;"/>
+                        </div>
+                    </div>
+
+                    <div class="form-field" style="margin-top: 10px;">
+                        <p:outputLabel for="custType" value="Type:"/>
+                        <p:selectOneMenu id="custType" value="#{salesBean.newCustomer.customerType}"
+                                         style="width: 100%;">
+                            <f:selectItem itemLabel="REGULAR" itemValue="REGULAR"/>
+                            <f:selectItem itemLabel="VIP" itemValue="VIP"/>
+                            <f:selectItem itemLabel="WHOLESALE" itemValue="WHOLESALE"/>
+                        </p:selectOneMenu>
+                    </div>
+                </p:outputPanel>
+
+                <f:facet name="footer">
+                    <p:commandButton value="Create &amp; Select" icon="pi pi-check"
+                                     actionListener="#{salesBean.saveNewCustomer}"
+                                     update=":form:salesDialog :form:messages"
+                                     oncomplete="if (args &amp;&amp; !args.validationFailed) PF('newCustomerDialog').hide()"
+                                     styleClass="ui-button-success"/>
+                    <p:commandButton value="Cancel" icon="pi pi-times"
+                                     onclick="PF('newCustomerDialog').hide()"
+                                     styleClass="ui-button-secondary"
+                                     type="button"/>
+                </f:facet>
+            </p:dialog>
         </h:form>
     </div>
 </h:body>
