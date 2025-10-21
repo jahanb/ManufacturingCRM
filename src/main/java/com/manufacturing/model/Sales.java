@@ -1,17 +1,13 @@
 package com.manufacturing.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Document(collection = "sales")
 public class Sales {
     @Id
@@ -21,25 +17,62 @@ public class Sales {
     private Salesperson salesperson;
 
     @DBRef
-    private Product product;
-    @DBRef
     private Customer customer;
-    private Integer quantity;
-    private Double unitPrice;
-    private Double totalAmount;
+
+    // Multiple items in one sale
+    private List<SalesItem> items;
+
+    private Double totalAmount; // Sum of all line totals
     private LocalDateTime saleDate;
-    private String customerName;
     private String status; // PENDING, COMPLETED, CANCELLED
     private String notes;
 
-    public Customer getCustomer() {
-        return customer;
+    // Constructors
+    public Sales() {
+        this.items = new ArrayList<>();
     }
 
-    public void setCustomer(Customer customer) {
+    public Sales(String id, Salesperson salesperson, Customer customer, List<SalesItem> items,
+                 Double totalAmount, LocalDateTime saleDate, String status, String notes) {
+        this.id = id;
+        this.salesperson = salesperson;
         this.customer = customer;
+        this.items = items != null ? items : new ArrayList<>();
+        this.totalAmount = totalAmount;
+        this.saleDate = saleDate;
+        this.status = status;
+        this.notes = notes;
     }
 
+    // Calculate total from all items
+    public void calculateTotal() {
+        if (items != null && !items.isEmpty()) {
+            totalAmount = items.stream()
+                    .mapToDouble(item -> item.getLineTotal() != null ? item.getLineTotal() : 0.0)
+                    .sum();
+        } else {
+            totalAmount = 0.0;
+        }
+    }
+
+    // Add item to sale
+    public void addItem(SalesItem item) {
+        if (items == null) {
+            items = new ArrayList<>();
+        }
+        items.add(item);
+        calculateTotal();
+    }
+
+    // Remove item from sale
+    public void removeItem(SalesItem item) {
+        if (items != null) {
+            items.remove(item);
+            calculateTotal();
+        }
+    }
+
+    // Getters and Setters
     public String getId() {
         return id;
     }
@@ -56,28 +89,21 @@ public class Sales {
         this.salesperson = salesperson;
     }
 
-    public Product getProduct() {
-        return product;
+    public Customer getCustomer() {
+        return customer;
     }
 
-    public void setProduct(Product product) {
-        this.product = product;
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
     }
 
-    public Integer getQuantity() {
-        return quantity;
+    public List<SalesItem> getItems() {
+        return items;
     }
 
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-
-    public Double getUnitPrice() {
-        return unitPrice;
-    }
-
-    public void setUnitPrice(Double unitPrice) {
-        this.unitPrice = unitPrice;
+    public void setItems(List<SalesItem> items) {
+        this.items = items;
+        calculateTotal();
     }
 
     public Double getTotalAmount() {
@@ -94,14 +120,6 @@ public class Sales {
 
     public void setSaleDate(LocalDateTime saleDate) {
         this.saleDate = saleDate;
-    }
-
-    public String getCustomerName() {
-        return customerName;
-    }
-
-    public void setCustomerName(String customerName) {
-        this.customerName = customerName;
     }
 
     public String getStatus() {
